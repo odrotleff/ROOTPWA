@@ -493,6 +493,13 @@ set(STORAGEFORMATS_LIBS
 	RootPwaMeta
 	)
 
+set(HIGHLEVELINTERFACE_INCLUDE_DIR
+	${CMAKE_SOURCE_DIR}/highLevelInterface
+	)
+set(HIGHLEVELINTERFACE_LIBS
+	RootPwaHighLevelInterface
+	)
+
 set(AMPLITUDE_INCLUDE_DIR
 	${CMAKE_SOURCE_DIR}/amplitude
 	)
@@ -559,6 +566,9 @@ add_subdirectory(particleData)
 
 # Metadata
 add_subdirectory(storageFormats)
+
+# High-level Interface
+add_subdirectory(highLevelInterface)
 
 # CUDA stuff
 if(USE_CUDA)
