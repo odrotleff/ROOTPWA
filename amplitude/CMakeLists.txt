@@ -40,6 +40,7 @@ set(INCLUDE_DIRECTORIES
 	${GEN_INCLUDE_DIR}
 	${UTILITIES_INCLUDE_DIR}
 	${PARTICLEDATA_INCLUDE_DIR}
+	${STORAGEFORMATS_INCLUDE_DIR}
 	SYSTEM
 	${Boost_INCLUDE_DIRS}
 	${Libconfig_INCLUDE_DIR}
@@ -65,8 +66,6 @@ set(SOURCES
 	isobarAmplitude.cc
 	isobarHelicityAmplitude.cc
 	isobarCanonicalAmplitude.cc
-	amplitudeTreeLeaf.cc
-	amplitudeTreeHelper.cc
 	ampIntegralMatrix.cc
 	waveSetGenerator.cc
 	phaseSpaceIntegral.cc
@@ -81,7 +80,7 @@ set(THIS_LIB "RootPwaAmp")
 set(ROOTPWAAMP_DICTIONARY ${CMAKE_CURRENT_BINARY_DIR}/rootPwaAmpDict.cc)
 root_generate_dictionary(
 	${ROOTPWAAMP_DICTIONARY}
-	waveDescription.h amplitudeTreeLeaf.h ampIntegralMatrix.h
+	waveDescription.h ampIntegralMatrix.h
 	MODULE ${THIS_LIB}
 	LINKDEF rootPwaAmpLinkDef.h
 	)
@@ -95,6 +94,7 @@ make_shared_library(
 	"${ROOT_LIBS}"
 	"${Libconfig_LIBS}"
 	"${PARTICLEDATA_LIBS}"
+	"${STORAGEFORMATS_LIBS}"
 	"${ROOTPWA_NBPSGEN_LIBS}"
 	)
 

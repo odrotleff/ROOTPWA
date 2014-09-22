@@ -47,6 +47,7 @@ include_directories(${INCLUDE_DIRECTORIES})
 
 # source files that are compiled into library
 set(SOURCES
+	amplitudeTreeLeaf.cc
 	eventMetadata.cc
 	eventFileWriter.cc
 	hashCalculator.cc
@@ -61,7 +62,7 @@ set(THIS_LIB "RootPwaMeta")
 set(ROOTPWASTORAGE_DICTIONARY ${CMAKE_CURRENT_BINARY_DIR}/rootPwaStorageFormatsDict.cc)
 root_generate_dictionary(
 	${ROOTPWASTORAGE_DICTIONARY}
-	eventMetadata.h
+	amplitudeTreeLeaf.h eventMetadata.h
 	MODULE ${THIS_LIB}
 	LINKDEF rootPwaStorageLinkDef.h
 	)
