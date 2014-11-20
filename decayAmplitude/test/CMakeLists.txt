@@ -51,6 +51,5 @@ make_executable(testDecayTopology           testDecayTopology.cc             "${
 make_executable(testWaveDescription         testWaveDescription.cc           "${RPWA_DECAYAMPLITUDE_LIB}" "${RPWA_UTILITIES_LIB}")
 make_executable(testWaveSetGenerator        testWaveSetGenerator.cc          "${RPWA_DECAYAMPLITUDE_LIB}")
 make_executable(testAmplitudeTree           testAmplitudeTree.cc             "${RPWA_DECAYAMPLITUDE_LIB}" "${RPWA_UTILITIES_LIB}")
-make_executable(testIntegral                testIntegral.cc                  "${RPWA_DECAYAMPLITUDE_LIB}")
 make_executable(testPeakShapeInstableIsobar testPeakShapeInstableIsobar.cc   "${RPWA_DECAYAMPLITUDE_LIB}" "${RPWA_GENERATORS_LIB}")
 make_executable(testPeakShapeInstableIsobar2 testPeakShapeInstableIsobar2.cc "${RPWA_DECAYAMPLITUDE_LIB}")
