@@ -1,10 +1,6 @@
 <!--- please do _not_ break the paragraphs to 80 char line width -->
 
-
-[TOC]
-
-
-# ROOTPWA #
+# ROOTPWA
 
 ROOTPWA is a toolkit for partial-wave analysis of multi-particle final states produced in high-energy particle reactions. Based on experimental and Monte-Carlo data that are read into the program in the form of three-vector tuples and the set of partial waves specified by the user in form of ASCII files, ROOTPWA determines the production amplitudes of the various partial waves by performing an unbinned extended maximum-likelihood fit that uses the full kinematic information of the measured final-state particles and that takes into account detector acceptance as well as reconstruction efficiency. For the calculation of the partial-wave decay amplitudes the helicity formalism is used. The code structure, however, is open for the implementation of other formalisms.
 
@@ -20,15 +16,14 @@ Below you will find instructions on how to install the external libraries needed
 ***
 
 
-# Installation Instructions #
+# Installation Instructions
 
-
-## Prerequisites ##
+## Prerequisites
 
 ROOTPWA will usually run without problems on most (not too old) Linux and MacOS X systems. Regular tests are performed on the latest Ubuntu distribution and MacOS version as well as on the Scientific Linux CERN (SLC) distribution installed on the [_lxplus_](http://plus.web.cern.ch/plus/) interactive login service provided by CERN. Before you can build ROOTPWA you need to install the following software packages.
 
 
-### CMake ###
+### CMake
 
 CMake is a cross-platform, open-source build system available from <http://cmake.org>. In addition to the [reference documentation](http://www.cmake.org/cmake/help/documentation.html) available at the project web page further information about CMake can be found at
 
@@ -45,13 +40,17 @@ The minimum required CMake version is 2.8.8. In case your system offers only out
 
 2.  Prepare the installation
 
-    `> bootstrap --prefix=<install directory>`
+    ```sh
+    > bootstrap --prefix=<install directory>`
+    ```
 
     On multi-core machines you may speed up things by using the `--parallel=<# of processes>` option. If you plan to use the CMake GUI, you should set the `--qt-gui` flag. This of course requires that you have the QT libraries installed.
 
 3.  Compile CMake
 
-    `> make && make install`
+    ```sh
+    > make && make install`
+    ```
 
 4.  Add `<install directory>/bin` to your path or create an alias for cmake.
 
@@ -68,49 +67,61 @@ Part of the code relies on the Boost C++ template library which is available at 
 
 A more convenient way than downloading and extracting the tarball of a certain Boost version is to clone the Boost git repository by running
 
-    > git clone https://github.com/ned14/boost-trunk.git
+```sh
+> git clone https://github.com/ned14/boost-trunk.git
+```
 
 The list of available versions (tags) is printed by
-
-    > git tag
+```sh
+> git tag
+```
 
 Checkout the wanted release version via
 
-    > cd boost-trunk
-    > git checkout release/Boost_1_50_0
+```sh
+> cd boost-trunk
+> git checkout release/Boost_1_50_0
+```
 
 This way one can easily switch to any existing Boost version and also updates are much more convenient:
 
-    > git checkout master
-    > git fetch
-    > git fetch --tags
-    > git checkout release/Boost_1_51_0
+```sh
+> git checkout master
+> git fetch
+> git fetch --tags
+> git checkout release/Boost_1_51_0
+```
 
 If you use one of the (optional) features like Python or MPI be sure to recompile the respective Boost libraries after having switched to a different Boost version.
 
 In order to find out the current Boost version (a.k.a. branch tag) run
 
-    > git describe --tags
+```sh
+> git describe --tags
+```
 
-
-### ROOT ###
+### ROOT
 
 ROOT is an open-source data-analysis framework for high-energy and nuclear physics and is available from <http://root.cern.ch>. Version 5.26 or higher is required and it must have been built with the configure options
 
-    `./configure --enable-mathmore --enable-minuit2`
+```sh
+> ./configure --enable-mathmore --enable-minuit2
+```
 
 If `root-config --features` does _not_ list `mathmore` _and_ `minuit2` you need to re-configure and re-compile ROOT with these options. See <http://root.cern.ch/drupal/content/installing-root-source> for more information in how to compile ROOT from source.
 
 
-### libconfig ###
+### libconfig
 
 We use the _libconfig_ config file parser written by Mark A. Lindner available from <http://www.hyperrealm.com/libconfig/>. Version 1.4 or higher is required. At least for Debian and Ubuntu recent libconfig packages are available, for SLC6 only outdated packages are provided. In case you do not have administrator privileges you can compile libconfig from source which is straightforward. The easiest way is to install the library into the same directory as the source
 
-    > ./configure --prefix=/your/folder/to/install/libconfig
-    > make && make install
+```sh
+> ./configure --prefix=/your/folder/to/install/libconfig
+> make && make install
+```
 
 
-### Python (optional) ###
+### Python (optional)
 
 In order to make scripting more powerful and flexible, some of the ROOTPWA classes are Python-ified, so that they can be interfaced directly in Python. In the long term much of the house-keeping and user-interface code that is currently scattered across several C++ programs, shell scripts, and ROOT scripts will be reimplemented in Python.
 
@@ -120,41 +131,50 @@ The build system tries to find your Python installation automatically. For this 
 
 2.  Compile Python.
 
-    `> ./configure --enable-shared && make && make install && make test`
+    ```sh
+    > ./configure --enable-shared && make && make install && make test
+    ```
 
-    Depending on whether you have administrator rights or not you might want to set the prefix accordingly (e.g. `` --prefix=`pwd -P` ``). In this case you also have to make sure to add the Python `bin` and `lib` directories to your `PATH` and `LD_LIBRARY_PATH` environment variables, respectively.
+    Depending on whether you have administrator rights or not you might want to set the prefix accordingly (e.g. `--prefix=pwd -P`). In this case you also have to make sure to add the Python `bin` and `lib` directories to your `PATH` and `LD_LIBRARY_PATH` environment variables, respectively.
 
-In addition you also need to compile the `Boost.Python` library (e.g. by running the supplied `compileBoostLibraries.sh` script). If the build system has found your Python installation and the `Boost.Python` library, the Python features are automatically enabled. Make also sure that the ROOT installation you are using was compiled with Python support (running `root-config --features` should list `python`) against the _same_ Python version you are using (`ldd ${ROOTSYS}/lib/libPyROOT.so | grep -i python` shows you the Python library version against which ROOT was linked). Make also sure that your `PYTHONPATH` environment variable includes `${ROOTSYS}/lib`.
+    In addition you also need to compile the `Boost.Python` library (e.g. by running the supplied `compileBoostLibraries.sh` script). If the build system has found your Python installation and the `Boost.Python` library, the Python features are automatically enabled. Make also sure that the ROOT installation you are using was compiled with Python support (running `root-config --features` should list `python`) against the _same_ Python version you are using (`ldd ${ROOTSYS}/lib/libPyROOT.so | grep -i python` shows you the Python library version against which ROOT was linked). Make also sure that your `PYTHONPATH` environment variable includes `${ROOTSYS}/lib`.
 
 
-### CUDA (optional) ###
+### CUDA (optional)
 
 If you have access to a CUDA capable nvidia graphics card (shader model 2.0 or higher), you may want to install the CUDA framework (version 5.5 or higher). The build system tries to find your CUDA installation and, if successful, enables the CUDA features automatically. Make sure that your CUDA environment is setup correctly by adding something like
 
-    `export PATH=/usr/local/cuda-5.5/bin:${PATH}`
-    `export LD_LIBRARY_PATH=/usr/local/cuda-5.5/lib64:${LD_LIBRARY_PATH}`
-    (for 32-bit systems: `export LD_LIBRARY_PATH=/usr/local/cuda-5.5/lib:${LD_LIBRARY_PATH}`)
+```sh
+> export PATH=/usr/local/cuda-5.5/bin:${PATH}
+> export LD_LIBRARY_PATH=/usr/local/cuda-5.5/lib64:${LD_LIBRARY_PATH}
+```
+
+for 32-bit systems:
+```sh
+> export LD_LIBRARY_PATH=/usr/local/cuda-5.5/lib:${LD_LIBRARY_PATH}
+```
 
 to your `.bashrc`. You have to copy the CUDA samples to a directory of your choice by running
-
-    `cuda-install-samples-5.5.sh <dir>`
+```sh
+> cuda-install-samples-5.5.sh <dir>
+```
 
 Point the environment variable `CUDA_SAMPLES_ROOT_DIR` to the location of the directory with the CUDA samples. If this variable is not set, the build system assumes that the directory is located in `${HOME}/NVIDIA_CUDA-5.5_Samples`.
 
 
-### MPI (optional, experimental) ###
+### MPI (optional, experimental)
 
 In order take advantage of the parallel nature of the computing problems in PWA, it is planned to make some of the executables MPI-aware, so that they run on multi-core machines as well as on MPI PC-clusters. The build system tries to find your MPI installation (openMPI recommended) automatically. In addition you also need to compile the `Boost.MPI` libraries (e.g. by running the supplied `compileBoostLibraries.sh` script). If the build system has found both the MPI installation and the `Boost.MPI` libraries, the MPI features are automatically enabled.
 
-
 ***
 
-
-## Getting ROOTPWA ##
+## Getting ROOTPWA
 
 The ROOTPWA source code is available through the central [git repository](https://sourceforge.net/p/rootpwa/code/) hosted at SourceForge.  In order to get the sources you have to "clone" the repository by running
 
-    > git clone git://git.code.sf.net/p/rootpwa/code rootpwa-code
+```sh
+> git clone git://git.code.sf.net/p/rootpwa/code rootpwa-code
+```
 
 The command will download the code into the `rootpwa-code` directory. This working copy is a git repository of its own which contains _all_ past revisions of the project and which you may use for code experiments. If you plan to contribute code, please read the section "Contributing to ROOTPWA" below.
 
@@ -162,26 +182,32 @@ ROOTPWA is developed in multiple code branches, most of which contain work in pr
 
 By default you will be in the "master" branch after you cloned the repository. This branch is used for development so users are strongly recommended to switch to a more stable branch. At the moment there is one stable branch called `_v1`. You can get a list of tags for this branch by running
 
-    > git tag | grep <branch name>
+```sh
+> git tag | grep <branch name>
+```
 
 The naming scheme for the tags is `<branch name>.<version number>` (e.g. `_v1.12`). In order to get the revision that belongs to a certain tag run
 
-    > git checkout <tag name>
+```sh
+> git checkout <tag name>
+```
 
 If you are more adventurous and want to get the latest version of a branch, run
 
-    > git checkout -t origin/<branch name>
+```sh
+> git checkout -t origin/<branch name>
+```
 
 
 ***
 
 
-## Building ROOTPWA ##
+## Building ROOTPWA
 
 Finally you are ready to build ROOTPWA from the sources.
 
 
-### Setting Up Build Environment ###
+### Setting Up Build Environment
 
 1.  Make sure that you have installed all the packages mentioned above for the correct architecture: If you compile on a 32 bit machine, _all_ external libraries need also to be compiled for 32 bit. Similarly for 64 bit machines _all_ libraries (including ROOT!) have to be compiled for 64 bit. Mixed 32/64 bit compilation is not supported and will result in linker errors.
 
@@ -196,17 +222,17 @@ Finally you are ready to build ROOTPWA from the sources.
 ROOTPWA comes with some example `setup*.sh` scripts that define set all the above mentioned environment variables and can be used as templates. You should copy one of them and modify it according to your environment.
 
 
-### Compiling ROOTPWA ###
+### Compiling ROOTPWA
 
 1.  We use an out-of-source build strategy (one of the nice features of CMake). This means that all files created by the build system will reside in a separate directory outside of the directories that contain the source code. The build system expects this directory to be `${ROOTPWA}/build` which should already exist in your git working copy.
 
 2.  The contents of the build directory _can be safely deleted_ whenever you feel like it, since it can be _always_ regenerated by (re)starting the build process. This also means that is not a good idea to put any valuable files into the `build` directory or one of its subdirectories. To start the build process run
 
-    `> cd ${ROOTPWA}/build`
-
-    `> cmake ..`
-
-    `> make`
+    ```sh
+    > cd ${ROOTPWA}/build
+    > cmake ..
+    > make
+    ```
 
     Note that there is no `make install`.
 
@@ -221,88 +247,126 @@ ROOTPWA comes with some example `setup*.sh` scripts that define set all the abov
 
     You can choose a different build option by using CMake's `-D` option, e.g.
 
-    `> cmake -D CMAKE_BUILD_TYPE=DEBUG ..`
-
-    `> cmake -D CMAKE_BUILD_TYPE=RELWITHDEBINFO ..`
-
-    `> cmake -D CMAKE_BUILD_TYPE=MINSIZEREL ..`
+    ```sh
+    > cmake -D CMAKE_BUILD_TYPE=DEBUG ..
+    > cmake -D CMAKE_BUILD_TYPE=RELWITHDEBINFO ..
+    > cmake -D CMAKE_BUILD_TYPE=MINSIZEREL ..
+    ```
 
     CMake will print the compiler flags used in the build process. For debugging purposes you can enable the CMake debug output by running
 
-    `> make VERBOSE=1`
+    ```sh
+    > make VERBOSE=1
+    ```
 
 3.  In order to be able to run the ROOTPWA programs you need to add `${ROOTPWA}/build/lib` to your `LD_LIBRARY_PATH` environment variable. It is also a good idea to add `${ROOTPWA}/build/bin` to the path.
 
 4.  If you have doxygen installed on your system you can build a html documentation by running
 
-    `> make doxygen`
+    ```sh
+    > make doxygen
+    ```
 
     The doxygen documentation will be generated in the directory `${ROOTPWA}/html-doc/html/`. It can be viewed with any web browser, e.g.
 
-    `> firefox ${ROOTPWA}/html-doc/html/index.html`
-
+    ```sh
+    > firefox ${ROOTPWA}/html-doc/html/index.html
+    ```
     This doxygen documentation is also available at the SourceForge project site at <http://rootpwa.sourceforge.net/>. However, it is updated less frequently and might thus be slightly outdated.
 
     Registered SourceForge project members with the respective permissions can upload the documentation by doing
 
-    `> cd ${ROOTPWA}/html-doc`
-
-    `> sftp <username>,rootpwa@web.sourceforge.net`
-
-    `sftp> cd htdocs`
-
-    `sftp> put html/*`
-
-    `sftp> exit`
+    ```sh
+    > cd ${ROOTPWA}/html-doc
+    > sftp <username>,rootpwa@web.sourceforge.net
+    sftp> cd htdocs
+    sftp> put html/*
+    sftp> exit
+    ```
 
 
-### Advanced Compilation Options ###
+### Advanced Compilation Options
 
 
-#### 32bit Compilation ####
+#### 32bit Compilation
 
 The default behavior is that the build system determines, whether it runs on a 32 or 64bit system, and chooses the compilation options accordingly. However, sometimes it is required to compile in 32bit mode on a 64bit platform. This is easily achieved by only slightly modifying step 2 of the above build process
 
-    `> cd ${ROOTPWA}/build`
-
-    `> CXXFLAGS=-m32 cmake ..`
-
-    `> make`
+```sh
+> cd ${ROOTPWA}/build
+> CXXFLAGS=-m32 cmake ..
+> make
+```
 
 This injects the -m32 flag into all the necessary compiler invocations. Running in 32bit mode you have to make sure, that also _all_ other libraries ROOTPWA is linked against are compiled in 32bit mode. This is usually obtained by running
 
-    `> ./configure --host=i686-linux-gnu "CFLAGS=-m32" "CXXFLAGS=-m32" "LDFLAGS=-m32"`
+```sh
+> ./configure --host=i686-linux-gnu "CFLAGS=-m32" "CXXFLAGS=-m32" "LDFLAGS=-m32"
+```
 
 instead of the normal configure call.
 
 
-#### Using other Compilers ####
+#### Using other Compilers
 
 Other compilers like LLVM Clang are supported as long as they understand gcc compiler flags. In order to switch the compiler suite you have to define the environment variables CC and CXX. For example, switching to LLVM Clang would be achieved by executing
 
-    `> export CC=$(which clang)`
-
-    `> export CXX=$(which clang++)`
+```sh
+> export CC=$(which clang)
+> export CXX=$(which clang++)
+```
 
 prior to initializing the build directory by calling cmake.
 
 
 ***
 
+# Using ROOTPWA
 
-# Contributing to ROOTPWA #
+To use RootPwa you have to set up a config file. The best place for this is the config file `$ROOTPWA/pyInterface/rootpwa.config`. Edit the file to your liking (especially the key/data file folders) and save.
+All the scripts the user needs to user are in the directory `$ROOTPWA/pyInterface`. So as a first step write into a shell:
+```sh
+> cd $ROOTPWA/pyInterface
+```
+
+## Creating a File Manager
+
+To create a file manager enter the following lines into a shell:
+```sh
+> ./userInterface/createFileManager.py
+```
+This will create a file manager based on the config file rootpwa.config in the current folder (should be `$ROOTWA/pyinterface` if you followed the steps correctly).
+
+## Calculating Amplitude Files
+
+To calculate amplitude files you have to excecute the calcAmplitudes script in `userInterface`:
+```sh
+> ./userInterface/calcAmplitudes.py
+```
+This will create amplitude files based on the key files and data files you specified in the config file and save them to the amplitude folder set in the config file.
+
+# Calculating the Integral File
+Execute the calcIntegrals script in `userInterface`:
+```sh
+> ./userInterface/calcIntegrals.py <filename>
+```
+The calcIntegrals script will calculate an integral matrix of all amplitude files in the file manager. Make sure to run the calcAmplitudes script before since the script creates the amplitude files this script has to read. The single argument is the path of the output integral matrix file (`*.root` format)
+
+***
+
+# Contributing to ROOTPWA
 
 Contributions to the development of ROOTPWA are very welcome and can be made in several ways:
 
 
-## Bug Reports / Feature Requests ##
+## Bug Reports / Feature Requests
 
 If you find a problem with ROOTPWA or feel that a feature that you would like to have is missing, you can file a [bug report](https://sourceforge.net/p/rootpwa/bugs/) or a [feature request](https://sourceforge.net/p/rootpwa/feature-requests/) on our website. Before submitting a report, please check if your item has not already been submitted by somebody else. Note that you can vote on both bug reports and feature requests if you feel that their resolution is of help to you.
 
 If you already have a solution for a particular bug or have already implemented a new feature, feel free to attach a patch to the corresponding request. The ROOTPWA developers will review your changes and consider them for implementation to the repository.
 
 
-## Contributing Code ##
+## Contributing Code
 
 If you would like to contribute to ROOTPWA to an extent which would be impractical for patch files, you can fork the ROOTPWA repository. To do this, you need to have a SourceForge account. While logged in, go to the [ROOTPWA repository](https://sourceforge.net/p/rootpwa/code/) and click "Fork" on the left. This will give you your own copy of the ROOTPWA git repository on SourceForge which you can use to implement your contribution. As soon as you judge your work ready for integration, you can issue a merge request by clicking "Request Merge" in your copy of the repository. The ROOTPWA developers will then consider your changes for implementation.
 
@@ -311,12 +375,12 @@ In case you are new to git and need information on how to work with it, we recom
 Some information which might be of importance:
 
 
-### Branch Layout ###
+### Branch Layout
 
 The ROOTPWA repository uses the master branch for development, meaning that the latest development version is generally in the master branch. For older versions, there are maintenance branches name `_v1`, `_v2`, etc. Versions which are deemed stable are tagged with a version number, e.g. `<branch name>.<version number>` (e.g. `_v1.12`). Most work is to be done in topic branches whose name should _not_ start with an `_`. If you are unsure which branch your work should be based upon, feel free to contact the ROOTPWA developers for support.
 
 
-### Commit Message Format ###
+### Commit Message Format
 
 ROOTPWA follows a policy for the commit messages, which is close to the standard git commit message policy. It consists of the following rules:
 
@@ -327,7 +391,9 @@ ROOTPWA follows a policy for the commit messages, which is close to the standard
 
 Please note that the ROOTPWA git repository uses a server hook to enforce this policy. Should any of the commits you would like to see integrated not fulfill these requirements, all of them will be rejected and you will have to re-edit the problematic messages. To reduce problems, there is a git hook in the repository which you can use on the client side to check all the commit messages already when committing. You can install it by running
 
-    > cd $ROOTPWA/gitUtils
-    > ./installClientHook.sh
+```sh
+> cd $ROOTPWA/gitUtils
+> ./installClientHook.sh
+```
 
 Please note that the `ROOTPWA` environment variable has to be set for the script to work.
