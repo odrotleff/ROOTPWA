@@ -2,34 +2,51 @@
 
 import argparse
 import sys
+import numpy
 
 import pyRootPwa
 import pyRootPwa.core
 ROOT = pyRootPwa.ROOT
 
-def getDiffListAbs(r1, i1, r2, i2):
+def getDiffListAbs(list1, list2):
 	diff = []
-	for i in range(len(r1)):
-		diff.append(abs(r1[i] - r2[i]) + abs(i1[i] - i2[i]))
+	for i in range(len(list1)):
+		diff.append(list1[i] - list2[i])
 	return diff
 
-def getDiffListRel(r1, i1, r2, i2):
-	diff = []
-	for i in range(len(r1)):
-		diff.append((abs(r1[i] - r2[i]) + abs(i1[i] - i2[i])) / (abs(r1[i] + r2[i]) + abs(i1[i] + i2[i])))
-	return diff
-
-def saveHistogram(path, name, title, lst):
-	minHist = minimum(lst)
-	maxHist = maximum(lst)
-	if maxHist == 0: maxHist = 10**(-15)
-	hist = ROOT.TH1D(name, title, 100, minHist, maxHist)
+def getHistogram(name, title, lst):
+	minHist = minimum(lst) * 1.1
+	maxHist = maximum(lst) * 1.1
+	if abs(maxHist) > abs(minHist):
+		minHist = - abs(maxHist)
+	else:
+		maxHist = abs(minHist)
+	if maxHist == 0: maxHist = 10**(-11)
+	if minHist == 0: minHist = -10**(-11)
+	minHist = -1e-14
+	maxHist = 1e-14
+	hist = ROOT.TH1D(name, title, 150, minHist, maxHist)
 	for val in lst:
 		hist.Fill(val)
-	histFile = ROOT.TFile.Open(path + "/" + name + ".root", "RECREATE")
-	hist.Write()
-	histFile.Close()
 	return hist
+
+def saveHistogram(path, hist):
+	rootFile = ROOT.TFile.Open(path, "RECREATE")
+	hist.Write()
+	rootFile.Close()
+
+def saveTree(path, name, title, lst):
+	rootFile = ROOT.TFile.Open(path, "RECREATE")
+	tree = ROOT.TTree(name, title)
+	arr = numpy.zeros(1)
+	tree.Branch("diff", arr, "diff/D")
+	for element in lst:
+		arr[0] = element
+		tree.Fill()
+	hist = ROOT.TH1D(name + "_hist", title, 301, -1e-11, 1e-11)
+	tree.Draw("diff>>" + name + "_hist")
+	rootFile.Write()
+	rootFile.Close()
 
 def minimum(lst):
 	currMin = lst[0]
@@ -76,18 +93,11 @@ if __name__ == "__main__":
 		pyRootPwa.utils.printErr("both trees have to have the same number of entries. Aborting...")
 		sys.exit(1)
 
-	diffAbs = getDiffListAbs(real1, imag1, real2, imag2)
-	diffRel = getDiffListRel(real1, imag1, real2, imag2)
-	diffAbsSum = 0
-	diffRelAvg = 0
-	for currentDiff in diffAbs:
-		diffAbsSum += currentDiff
-	for currentDiff in diffRel:
-		diffRelAvg += currentDiff
-	diffRelAvg /= len(diffRel)
+	diffAbsReal = getDiffListAbs(real1, real2)
+	diffAbsImag = getDiffListAbs(imag1, imag2)
 
+	histReal = getHistogram("deltaReal", "delta real", diffAbsReal)
+	histImag = getHistogram("deltaImag", "delta imag", diffAbsImag)
+	saveHistogram("histReal.root", histReal)
+	saveHistogram("histImag.root", histImag)
 	pyRootPwa.utils.printSucc("comparing the files '" + args.file1 + "' and '" + args.file2 + "' done.")
-	pyRootPwa.utils.printSucc("sum of absolute delta: " + str(diffAbsSum))
-	pyRootPwa.utils.printSucc("average of relative delta: " + str(diffRelAvg))
-
-	saveHistogram("Test", "absolute delta", diffAbs)
