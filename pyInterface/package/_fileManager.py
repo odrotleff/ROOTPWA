@@ -122,7 +122,7 @@ class fileManager:
 
 	def getAmpFilePaths(self):
 		ampFileList = []
-		for key in self.amplitudeFiles:
+		for key in sorted(self.amplitudeFiles):
 			ampFileList.append(self.amplitudeDirectory + "/" + self.amplitudeFiles[key])
 		return ampFileList
 
