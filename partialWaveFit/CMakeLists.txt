@@ -51,6 +51,7 @@ include_directories(
 
 # source files that are compiled into library
 set(SOURCES
+	pwaFit.cc
 	fitResult.cc
 	complexMatrix.cc
 	pwaLikelihood.cc
@@ -87,7 +88,6 @@ make_shared_library(
 
 
 # executables
-make_executable(pwafit  pwafit.cc   ${THIS_LIB} "${RPWA_UTILITIES_LIB}")
 make_executable(pwaplot pwaplots.cc ${THIS_LIB})
 
 

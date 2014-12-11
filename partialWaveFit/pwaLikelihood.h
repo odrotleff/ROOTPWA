@@ -145,13 +145,12 @@ namespace rpwa {
 		static void setQuiet         (const bool flag    = true) { _debug             = !flag;   }
 
 		// operations
-		void init(const unsigned int rank,
-				  const std::string& waveListFileName,
-				  const std::string& normIntFileName,
-				  const std::string& accIntFileName,
-				  const std::string& ampDirName    = ".",
-				  const unsigned int numbAccEvents = 0,
-				  const bool         useRootAmps   = false);  ///< prepares all internal data structures
+		void init(const unsigned int                   rank,
+		          const std::string&                   waveListFileName,
+		          const ampIntegralMatrix&             normMatrix,
+		          const ampIntegralMatrix&             accMatrix,
+		          std::map<std::string, TTree*>& ampTrees,
+		          const unsigned int                   numbAccEvents);  ///< prepares all internal data structures
 
 		void getIntegralMatrices(rpwa::complexMatrix&       normMatrix,
 								 rpwa::complexMatrix&       accMatrix,
@@ -177,13 +176,10 @@ namespace rpwa {
 		// helper functions
 		void readWaveList       (const std::string& waveListFileName);  ///< reads wave names and thresholds from wave list file
 		void buildParDataStruct (const unsigned int rank);              ///< builds parameter data structures
-		void readIntegrals      (const std::string& normIntFileName,
-								 const std::string& accIntFileName,
-								 const std::string& integralTKeyName = "integral");  ///< reads normalization and acceptance integrals from file
+		void readIntegrals      (const ampIntegralMatrix& normIntFileName,
+								 const ampIntegralMatrix& accIntFileName);  ///< reads normalization and acceptance integrals from file
 
-		void readDecayAmplitudes(const std::string& ampDirName  = ".",
-								 const bool         useRootAmps = false,
-								 const std::string& ampLeafName = "amplitude");  ///< reads decay amplitudes from files in specified directory
+		void readDecayAmplitudes(std::map<std::string, TTree*>& trees);  ///< reads decay amplitudes from files in specified directory
 
 
 		void clear();
