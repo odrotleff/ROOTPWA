@@ -152,6 +152,7 @@ namespace rpwa {
 		inline TMatrixT<double> prodAmpCov(const std::vector<unsigned int>& prodAmpIndicesA,
 		                                   const std::vector<unsigned int>& prodAmpIndicesB) const;
 		bool                    covMatrixValid() const { return _covMatrixValid; }
+		void setCovMatrix(const TMatrixT<Double_t>& fitParCovMatrix) { _fitParCovMatrix = fitParCovMatrix; }
 
 		/// returns normalization integral for pair of waves at index A and B
 		inline std::complex<double> normIntegral(const unsigned int waveIndexA,
