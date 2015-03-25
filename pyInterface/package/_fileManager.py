@@ -120,10 +120,11 @@ class fileManager:
 		return fileManager.convertKeyFilesToPaths(self.keyFiles)
 
 
-	def getAmpFilePaths(self):
+	def getAmpFilePaths(self, eventsType):
 		ampFileList = []
 		for key in sorted(self.amplitudeFiles):
-			ampFileList.append(self.amplitudeDirectory + "/" + self.amplitudeFiles[key])
+			if (key[2] == eventsType):
+				ampFileList.append(self.amplitudeDirectory + "/" + self.amplitudeFiles[key])
 		return ampFileList
 
 
