@@ -1,5 +1,5 @@
-#ifndef FITRESULT_PY_H
-#define FITRESULT_PY_H
+#ifndef PWAFIT_PY_H
+#define PWAFIT_PY_H
 
 #include<boost/python.hpp>
 

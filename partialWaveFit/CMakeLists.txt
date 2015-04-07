@@ -51,7 +51,6 @@ include_directories(
 
 # source files that are compiled into library
 set(SOURCES
-	pwaFit.cc
 	fitResult.cc
 	complexMatrix.cc
 	pwaLikelihood.cc

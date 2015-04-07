@@ -1,176 +1,42 @@
-///////////////////////////////////////////////////////////////////////////
-//
-//    Copyright 2009 Sebastian Neubert
-//
-//    This file is part of rootpwa
-//
-//    rootpwa is free software: you can redistribute it and/or modify
-//    it under the terms of the GNU General Public License as published by
-//    the Free Software Foundation, either version 3 of the License, or
-//    (at your option) any later version.
-//
-//    rootpwa is distributed in the hope that it will be useful,
-//    but WITHOUT ANY WARRANTY; without even the implied warranty of
-//    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-//    GNU General Public License for more details.
-//
-//    You should have received a copy of the GNU General Public License
-//    along with rootpwa.  If not, see <http://www.gnu.org/licenses/>.
-//
-///////////////////////////////////////////////////////////////////////////
-//-----------------------------------------------------------
-//
-// Description:
-//      fitting program for rootpwa
-//      minimizes pwaLikelihood function
-//
-//
-// Author List:
-//      Sebastian Neubert    TUM            (original author)
-//
-//
-//-----------------------------------------------------------
-
-
-#include <iostream>
-#include <iomanip>
-#include <vector>
-#include <string>
-#include <complex>
-#include <cassert>
-#include <time.h>
-
-#include "TROOT.h"
-#include "TTree.h"
-#include "TFile.h"
-#include "TString.h"
-#include "TComplex.h"
-#include "TRandom3.h"
-#include "Math/Minimizer.h"
-#include "Math/Factory.h"
-#include "TStopwatch.h"
-#include "Minuit2/Minuit2Minimizer.h"
-
-#include "reportingUtilsEnvironment.h"
-#include "conversionUtils.hpp"
-#include "pwaLikelihood.h"
-#include "fitResult.h"
-#ifdef USE_CUDA
-#include "complex.cuh"
-#include "likelihoodInterface.cuh"
-#endif
-#include "amplitudeTreeLeaf.h"
 #include "pwaFit.h"
 
-void
-usage(const std::string& progName,
-      const int     errCode = 0)
+#include <complex>
+
+#include <boost/progress.hpp>
+
+#include "Math/Minimizer.h"
+#include "Math/Factory.h"
+#include "TFile.h"
+#include "TTree.h"
+#include "TRandom3.h"
+#include "TStopwatch.h"
+
+#include "pwaLikelihood.h"
+
+#include <reportingUtils.hpp>
+
+const std::string valTreeName   = "pwa";
+const std::string valBranchName = "fitResult_v2";
+
+rpwa::fitResultPtr
+rpwa::hli::pwaFit(std::map<std::string, TTree*>& ampTrees,
+	   const rpwa::ampIntegralMatrix& normMatrix,
+	   const rpwa::ampIntegralMatrix& accMatrix,
+	   const double massBinMin,
+	   const double massBinMax,
+	   const std::string waveListFileName,
+	   const std::string startValFileName,
+	   const bool useNormalizedAmps,
+	   const unsigned int rank)
 {
-
-	std::cerr << "performs PWA fit for given mass bin and list of waves" << std::endl
-	     << std::endl
-	     << "usage:" << std::endl
-	     << progName
-	     << " -l # -u # -w wavelist [-d amplitude directory -R -o outfile -S start value file -N -n normfile"
-	     << " [-a normfile] -r rank -M minimizer [-m algorithm -g strategy -t #] -q -h]" << std::endl
-	     << "    where:" << std::endl
-	     << "        -l #       lower edge of mass bin [MeV/c^2]" << std::endl
-	     << "        -u #       upper edge of mass bin [MeV/c^2]" << std::endl
-	     << "        -w file    path to wavelist file" << std::endl
-	     << "        -d dir     path to directory with decay amplitude files (default: '.')" << std::endl
-	     << "        -R         use .root amplitude files (default: false)" << std::endl
-	     << "        -o file    path to output file (default: 'fitresult.root')" << std::endl
-	     << "        -S file    path to file with start values (default: none; highest priority)" << std::endl
-	     << "        -s #       seed for random start values (default: 1234567)" << std::endl
-	     << "        -x #       use fixed instead of random start values (default: 0.01)" << std::endl
-
-	     << "        -N         use normalization of decay amplitudes (default: false)" << std::endl
-	     << "        -n file    path to normalization integral file (default: 'norm.int')" << std::endl
-	     << "        -a file    path to acceptance integral file (default: 'norm.int')" << std::endl
-	     << "        -A #       number of input events to normalize acceptance to" << std::endl
-	     << "        -r #       rank of spin density matrix (default: 1)" << std::endl
-	     << "        -M name    minimizer (default: Minuit2)" << std::endl
-	     << "        -m name    minimization algorithm (optional, default: Migrad)" << std::endl
-	     << "                   available minimizers: Minuit:      Migrad, Simplex, Minimize, Migrad_imp" << std::endl
-	     << "                                         Minuit2:     Migrad, Simplex, Combined, Scan, Fumili" << std::endl
-	     << "                                         GSLMultiMin: ConjugateFR, ConjugatePR, BFGS, BFGS2, SteepestDescent" << std::endl
-	     << "                                         GSLMultiFit: -" << std::endl
-	     << "                                         GSLSimAn:    -" << std::endl
-	     << "                                         Linear:      Robust" << std::endl
-	     << "                                         Fumili:      -" << std::endl
-	     << "        -g #       minimizer strategy: 0 = low, 1 = medium, 2 = high effort  (default: 1)" << std::endl
-	     << "        -t #       minimizer tolerance (default: 1e-10)" << std::endl
-#if ROOT_VERSION_CODE >= ROOT_VERSION(5, 34, 19)
-	     << "        -e         set minimizer storage level to 1 (only available for Minuit2, default: on)" << std::endl
-#else
-	     << "        -e         set minimizer storage level to 1 [not supported; ROOT version too low]" << std::endl
-#endif
-#ifdef USE_CUDA
-	     << "        -c         enable CUDA acceleration (default: off)" << std::endl
-#else
-	     << "        -c         enable CUDA acceleration [not supported by your platform]" << std::endl
-#endif
-	     << "        -q         run quietly (default: false)" << std::endl
-	     << "        -h         print help" << std::endl
-	     << std::endl;
-	exit(errCode);
-}
-
-
-std::ostream&
-printMinimizerStatus(std::ostream&   out,
-		             ROOT::Math::Minimizer& minimizer)
-{
-	out << "minimization stopped after " << minimizer.NCalls() << " function calls. "
-	    << "minimizer status summary:" << std::endl
-	    << "    total number of parameters .......................... " << minimizer.NDim()                 << std::endl
-	    << "    number of free parameters ........................... " << minimizer.NFree()                << std::endl
-	    << "    maximum allowed number of iterations ................ " << minimizer.MaxIterations()        << std::endl
-	    << "    maximum allowed number of function calls ............ " << minimizer.MaxFunctionCalls()     << std::endl
-	    << "    minimizer status .................................... " << minimizer.Status()               << std::endl
-	    << "    minimizer provides error and error matrix ........... " << rpwa::yesNo(minimizer.ProvidesError()) << std::endl
-	    << "    minimizer has performed detailed error validation ... " << rpwa::yesNo(minimizer.IsValidError())  << std::endl
-	    << "    estimated distance to minimum ....................... " << minimizer.Edm()                  << std::endl
-	    << "    statistical scale used for error calculation ........ " << minimizer.ErrorDef()             << std::endl
-	    << "    strategy ............................................ " << minimizer.Strategy()             << std::endl
-	    << "    absolute tolerance .................................. " << minimizer.Tolerance()            << std::endl
-	    << "    precision ........................................... " << minimizer.Precision()            << std::endl;
-	return out;
-}
-
-
-std::ostream&
-operator <<(std::ostream&   out,
-            ROOT::Math::Minimizer& minimizer)
-{
-	return printMinimizerStatus(out, minimizer);
-}
-
-
-const std::string rpwa::pwaFit::valTreeName   = "pwa";
-const std::string rpwa::pwaFit::valBranchName = "fitResult_v2";
-
-
-int
-rpwa::pwaFit::fit(
-                  std::map<std::string, TTree*>& ampTrees,
-                  rpwa::ampIntegralMatrix& normMatrix,
-                  rpwa::ampIntegralMatrix& accMatrix,
-                  double massBinMin,
-                  double massBinMax,
-                  std::string waveListFileName,
-                  std::string startValFileName,
-                  bool useNormalizedAmps,
-                  unsigned int rank)
-{
-	rpwa::printCompilerInfo();
-	rpwa::printLibraryInfo ();
-	rpwa::printGitHash     ();
-	std::cout << std::endl;
+//	rpwa::printCompilerInfo();
+//	rpwa::printLibraryInfo ();
+//	rpwa::printGitHash     ();
+//	std::cout << std::endl;
 
 	// force loading predefined std::complex dictionary
 	// see http://root.cern.ch/phpBB3/viewtopic.php?f=5&t=9618&p=50164
-	gROOT->ProcessLine("#include <complex>");
+//	gROOT->ProcessLine("#include <complex>");
 
 	// ---------------------------------------------------------------------------
 
@@ -184,11 +50,11 @@ rpwa::pwaFit::fit(
 	int                startValSeed          = 1234567;
 
 	unsigned int numbAccEvents            = 0;                      // number of events used for acceptance integrals
-	std::string       minimizerType[2]    = {"Minuit2", "Migrad"};  // minimizer, minimization algorithm
+	std::string  minimizerType[2]         = {"Minuit2", "Migrad"};  // minimizer, minimization algorithm
 	int          minimizerStrategy        = 1;                      // minimizer strategy
 	double       minimizerTolerance       = 1e-10;                  // minimizer tolerance
 #if ROOT_VERSION_CODE >= ROOT_VERSION(5, 34, 19)
-	bool         saveMinimizerMemory      = true;
+//	bool         saveMinimizerMemory      = true;
 #endif
 //	bool         cudaEnabled              = false;                  // if true CUDA kernels are activated
 	bool         quiet                    = false;
@@ -243,10 +109,10 @@ rpwa::pwaFit::fit(
 
 	// special for Minuit2
 #if ROOT_VERSION_CODE >= ROOT_VERSION(5, 34, 19)
-	if(saveMinimizerMemory and dynamic_cast<ROOT::Minuit2::Minuit2Minimizer*>(minimizer)) {
-			((ROOT::Minuit2::Minuit2Minimizer*)minimizer)->SetStorageLevel(0);
-			printInfo << "Minuit2 storage level set to 0." << std::endl;
-	}
+//	if(saveMinimizerMemory and dynamic_cast<ROOT::Minuit2::Minuit2Minimizer*>(minimizer)) {
+//			((ROOT::Minuit2::Minuit2Minimizer*)minimizer)->SetStorageLevel(0);
+//			printInfo << "Minuit2 storage level set to 0." << std::endl;
+//	}
 #endif
 
 	minimizer->SetFunction        (L);
@@ -455,86 +321,5 @@ rpwa::pwaFit::fit(
 
 	if (minimizer)
 		delete minimizer;
-	return 0;
+	return rpwa::fitResultPtr(new rpwa::fitResult());
 }
-
-/*int
-rpwa::pwaFit::writeToFile(std::string fileName) {
-	// ---------------------------------------------------------------------------
-	// write out result
-	printInfo << "writing result to '" << fileName << "'" << std::endl;
-	{
-		// open output file and create tree for writing
-		TFile* outFile = new TFile(fileName.c_str(), "UPDATE");
-		if ((not outFile) or outFile->IsZombie())
-			printWarn << "cannot open output file '" << fileName << "'. "
-					  << "no results will be written." << std::endl;
-		else {
-			// check whether output tree already exists
-			TTree*     tree;
-			rpwa::fitResult* result       = new fitResult();
-			outFile->GetObject(valTreeName.c_str(), tree);
-			if (not tree) {
-				printInfo << "file '" << fileName << "' is empty. "
-						  << "creating new tree '" << valTreeName << "' for PWA result." << std::endl;
-				tree = new TTree(valTreeName.c_str(), valTreeName.c_str());
-				tree->Branch(valBranchName.c_str(), &result);
-			} else {
-				tree->SetBranchAddress(valBranchName.c_str(), &result);
-			}
-
-			{
-				// get data structures to construct fitResult
-				std::vector<std::complex<double> > prodAmps;                // production amplitudes
-				std::vector<std::string>                prodAmpNames;            // names of production amplitudes used in fit
-				std::vector<std::pair<int,int> >        fitParCovMatrixIndices;  // indices of fit parameters for real and imaginary part in covariance matrix matrix
-				L.buildProdAmpArrays(minimizer->X(), prodAmps, fitParCovMatrixIndices, prodAmpNames, true);
-				TMatrixT<double> fitParCovMatrix(nmbPar, nmbPar);  // covariance matrix of fit parameters
-				for(unsigned int i = 0; i < nmbPar; ++i)
-					for(unsigned int j = 0; j < nmbPar; ++j)
-					  // The factor 0.5 is needed because
-					  // MINUIT by default assumes a Chi2
-					  // function and not a loglikeli
-					  // (see Minuit manual!)
-					  // Note: SetErrorDef in ROOT does not work
-						fitParCovMatrix[i][j] = 0.5* minimizer->CovMatrix(i, j);
-				const unsigned int nmbWaves = L.nmbWaves() + 1;  // flat wave is not included in L.nmbWaves()
-				rpwa::complexMatrix normIntegral(nmbWaves, nmbWaves);  // normalization integral over full phase space without acceptance
-				rpwa::complexMatrix accIntegral (nmbWaves, nmbWaves);  // normalization integral over full phase space with acceptance
-				std::vector<double> phaseSpaceIntegral;
-				L.getIntegralMatrices(normIntegral, accIntegral, phaseSpaceIntegral);
-				const int normNmbEvents = (useNormalizedAmps) ? 1 : L.nmbEvents();  // number of events to normalize to
-
-				std::cout << "filling fitResult:" << std::endl
-					 << "    number of fit parameters ............... " << nmbPar                        << std::endl
-					 << "    number of production amplitudes ........ " << prodAmps.size()               << std::endl
-					 << "    number of production amplitude names ... " << prodAmpNames.size()           << std::endl
-					 << "    number of wave names ................... " << nmbWaves                      << std::endl
-					 << "    number of cov. matrix indices .......... " << fitParCovMatrixIndices.size() << std::endl
-					 << "    dimension of covariance matrix ......... " << fitParCovMatrix.GetNrows() << " x " << fitParCovMatrix.GetNcols() << std::endl
-					 << "    dimension of normalization matrix ...... " << normIntegral.nRows()       << " x " << normIntegral.nCols()       << std::endl
-					 << "    dimension of acceptance matrix ......... " << accIntegral.nRows()        << " x " << accIntegral.nCols()        << std::endl;
-				result->fill(L.nmbEvents(),
-							 normNmbEvents,
-							 massBinCenter,
-							 minimizer->MinValue(),
-							 rank,
-							 prodAmps,
-							 prodAmpNames,
-							 fitParCovMatrix,
-							 fitParCovMatrixIndices,
-							 normIntegral,  // contains the sqrt of the integral matrix diagonal elements!!!
-							 accIntegral,
-							 phaseSpaceIntegral,
-							 converged,
-							 hasHesse);
-				//printDebug << *result;
-			}
-
-			// write result to file
-			tree->Fill();
-			tree->Write("", TObject::kOverwrite);
-			outFile->Close();
-		}
-	}
-}*/

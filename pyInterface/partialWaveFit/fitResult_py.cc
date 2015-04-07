@@ -354,5 +354,5 @@ void rpwa::py::exportFitResult() {
 
 		.def("Write", &fitResult_Write, bp::arg("name")=0)
 		.def("setBranchAddress", &rpwa::py::setBranchAddress<rpwa::fitResult*>);
-
+	bp::register_ptr_to_python<rpwa::fitResultPtr>();
 }
