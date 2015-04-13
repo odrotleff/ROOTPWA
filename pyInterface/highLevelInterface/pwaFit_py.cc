@@ -27,8 +27,8 @@ namespace {
 				ampTreesMap.insert(std::pair<std::string, TTree*>(bp::extract<std::string>(keys[i]), rpwa::py::convertFromPy<TTree*>(curTree.ptr())));
 			}
 		}
-		rpwa::ampIntegralMatrix* normMatrixPtr = rpwa::py::convertFromPy(normMatrix);
-		rpwa::ampIntegralMatrix* accMatrixPtr = rpwa::py::convertFromPy(accMatrix);
+		rpwa::ampIntegralMatrix* normMatrixPtr = rpwa::py::convertFromPy<rpwa::ampIntegralMatrix*>(normMatrix);
+		rpwa::ampIntegralMatrix* accMatrixPtr = rpwa::py::convertFromPy<rpwa::ampIntegralMatrix*>(accMatrix);
 		return rpwa::hli::pwaFit(ampTreesMap, *normMatrixPtr, *accMatrixPtr, massBinMin, massBinMax, waveListFileName, startValFileName, useNormalizedAmps, rank);
 //		return rpwa::fitResultPtr(new rpwa::fitResult());
 	}

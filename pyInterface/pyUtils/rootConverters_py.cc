@@ -126,6 +126,11 @@ void rpwa::py::exportRootConverters() {
 		, bp::return_internal_reference<1>()
 	);
 
+	bp::def(
+		"__RootConverters_convertFromPy_rpwaAmpIntegralMatrix", &rpwa::py::convertFromPy<rpwa::ampIntegralMatrix*>
+		, bp::return_internal_reference<1>()
+	);
+
 	rpwa::py::setBranchAddress<rpwa::fitResult*>(0, 0, "");
 	rpwa::py::setBranchAddress<rpwa::ampIntegralMatrix*>(0, 0, "");
 

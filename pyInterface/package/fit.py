@@ -44,6 +44,6 @@ def pwaFit(ampFileList, normIntegralFileName, accIntegralFileName, maxNmbEvents=
 				treeDict[meta.objectBaseName()] = tree
 		if not foundAmpKey:
 			pyRootPwa.utils.printWarn("no TKey in file '" + ampFileName + "'.")
-	fitResult = pyRootPwa.core.pwaFit(normIntMatrix, accIntMatrix)
+	fitResult = pyRootPwa.core.pwaFit(treeDict, normIntMatrix, accIntMatrix)
 	del ampFiles
 	return fitResult
