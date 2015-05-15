@@ -8,7 +8,7 @@ import pyRootPwa.core
 
 def readWaveList(waveListFileName):
 	pyRootPwa.utils.printInfo("reading amplitude names and thresholds from wave list file "
-	          + "'" + waveListFileName + "'.")
+	                        + "'" + waveListFileName + "'.")
 	try:
 		with open(waveListFileName, 'r') as waveListFile:
 			waveNamesFromWavelist = []
@@ -29,13 +29,13 @@ def readWaveList(waveListFileName):
 					waveThresholds.append(float(threshold))
 				else:
 					pyRootPwa.utils.printWarn("cannot parse line '" + line + "' in wave list file "
-					          + "'" + waveListFileName + "'.")
+					                        + "'" + waveListFileName + "'.")
 	#  			if (_debug):
 	#  				printDebug("reading line " + lineNmb + 1 + ": " + waveName + ", "
 	#  				           + "threshold = " + threshold + " MeV/c^2")
 				lineNmb += 1
 	except IOError:
-		printError("cannot open file '" + waveListFileName + "'. aborting.")
+		pyRootPwa.utils.printError("cannot open file '" + waveListFileName + "'. Aborting...")
 		sys.exit(1)
 	pyRootPwa.utils.printInfo("read " + str(lineNmb) + " lines from wave list file " + "'" + waveListFileName + "'")
 	return (waveNamesFromWavelist, waveThresholds)
@@ -60,7 +60,7 @@ if __name__ == "__main__":
 	parser.add_argument("-f", "--no-progress-bar", action="store_true", dest="noProgressBar", help="disable progress bars (decreases computing time)")
 	parser.add_argument("-k", "--keyfiles", type=str, metavar="keyfiles", dest="keyfiles", nargs="*", help="keyfiles to calculate amplitude for (overrides settings from the config file)")
 	parser.add_argument("-w", type=str, metavar="wavelistFileName", default="", dest="wavelistFileName", help="path to wavelist file (default: none)")
-#	parser.add_argument("-v", action="store_true", dest="debug", help="verbose; print debug output (default: false)")
+	parser.add_argument("-v", action="store_true", dest="debug", help="verbose; print debug output (default: false)")
 	parser.add_argument("--profiler", type=str, metavar="profiler-output", dest="proFile", help="path to profiler output file")
 	args = parser.parse_args()
 
@@ -86,7 +86,10 @@ if __name__ == "__main__":
 
 	for binID in binIDList:
 		for waveName in waveList:
-			for eventsType in [ pyRootPwa.core.eventMetadata.REAL, pyRootPwa.core.eventMetadata.GENERATED, pyRootPwa.core.eventMetadata.ACCEPTED, pyRootPwa.core.eventMetadata.OTHER ]:
+			for eventsType in [ pyRootPwa.core.eventMetadata.REAL,
+			                    pyRootPwa.core.eventMetadata.GENERATED,
+			                    pyRootPwa.core.eventMetadata.ACCEPTED,
+			                    pyRootPwa.core.eventMetadata.OTHER ]:
 				dataFile = fileManager.getDataFile(binID, eventsType)
 				if not dataFile:
 					continue
