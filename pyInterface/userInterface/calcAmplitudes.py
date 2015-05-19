@@ -56,6 +56,7 @@ if __name__ == "__main__":
 	parser.add_argument("-c", type=str, metavar="configFileName", default="rootpwa.config", dest="configFileName", help="path to config file (default: ./rootpwa.config)")
 	parser.add_argument("-n", type=int, metavar="#", default=-1, dest="maxNmbEvents",  help="maximum number of events to read (default: all)")
 	parser.add_argument("-b", type=int, metavar="massBin", default=-1, dest="massBin", help="mass bin to be calculated (default: all)")
+	parser.add_argument("-e", type=str, metavar="eventsType", default="all", dest="eventsType", help="events type to be calculated ('real', 'generated' or 'accepted', default: all)")
 	parser.add_argument("-j", type=int, metavar=("jobs"), default=1, dest="nJobs", help="number of jobs (default: 1)")
 	parser.add_argument("-f", "--no-progress-bar", action="store_true", dest="noProgressBar", help="disable progress bars (decreases computing time)")
 	parser.add_argument("-k", "--keyfiles", type=str, metavar="keyfiles", dest="keyfiles", nargs="*", help="keyfiles to calculate amplitude for (overrides settings from the config file)")
@@ -84,12 +85,24 @@ if __name__ == "__main__":
 	if (not args.massBin == -1):
 		binIDList = [args.massBin]
 
+	eventsTypes = []
+	if (args.eventsType == "real"):
+		eventsTypes = [ pyRootPwa.core.eventMetadata.REAL ]
+	elif (args.eventsType == "generated"):
+		eventsTypes = [ pyRootPwa.core.eventMetadata.GENERATED ]
+	elif (args.eventsType == "accepted"):
+		eventsTypes = [ pyRootPwa.core.eventMetadata.ACCEPTED ]
+	elif (args.eventsType == "all"):
+		eventsTypes = [ pyRootPwa.core.eventMetadata.REAL,
+		                pyRootPwa.core.eventMetadata.GENERATED,
+		                pyRootPwa.core.eventMetadata.ACCEPTED ]
+	else:
+		pyRootPwa.utils.printErr("Invalid events type given ('" + args.eventsType + "'). Aborting...")
+		sys.exit(1)
+
 	for binID in binIDList:
 		for waveName in waveList:
-			for eventsType in [ pyRootPwa.core.eventMetadata.REAL,
-			                    pyRootPwa.core.eventMetadata.GENERATED,
-			                    pyRootPwa.core.eventMetadata.ACCEPTED,
-			                    pyRootPwa.core.eventMetadata.OTHER ]:
+			for eventsType in eventsTypes:
 				dataFile = fileManager.getDataFile(binID, eventsType)
 				if not dataFile:
 					continue
