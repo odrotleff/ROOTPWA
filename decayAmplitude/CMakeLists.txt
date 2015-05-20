@@ -103,6 +103,7 @@ make_shared_library(
 make_executable(calcAmplitudes     calcAmplitudes.cc     ${THIS_LIB} "${RPWA_UTILITIES_LIB}")
 make_executable(checkKeyFile       checkKeyFile.cc       ${THIS_LIB} "${RPWA_UTILITIES_LIB}")
 make_executable(compareAmplitudeFiles compareAmplitudeFiles.cc            ${THIS_LIB} "${RPWA_UTILITIES_LIB}")
+make_executable(generateWaveSet    generateWaveSet.cc    ${THIS_LIB} "${RPWA_UTILITIES_LIB}")
 
 
 # build tests

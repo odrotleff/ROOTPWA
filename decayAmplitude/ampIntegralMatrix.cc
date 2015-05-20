@@ -43,7 +43,7 @@
 
 #include "reportingUtils.hpp"
 #include "fileUtils.hpp"
-#include "sumAccumulators.hpp"
+
 #include "amplitudeTreeLeaf.h"
 #include "ampIntegralMatrix.h"
 #include "amplitudeMetadata.h"
@@ -256,6 +256,47 @@ ampIntegralMatrix::element(const unsigned int waveIndexI,
 	return _integrals[waveIndexI][waveIndexJ] / ((double)_nmbEvents);
 }
 
+bool ampIntegralMatrix::initialize(const std::vector<std::string>& waveNames){
+
+	_nmbWaves = waveNames.size();
+	if (_nmbWaves==0){
+		printErr <<"no waves given"<<std::endl;
+		return false;
+	};
+	_waveNames = std::vector<std::string>();
+	for(size_t i=0; i < _nmbWaves;++i){
+		if (waveNames[i] == "") {
+			printErr << "can not add empty wave name.";
+			return false;
+		};
+		_waveNames.push_back(waveNames[i]);
+		_waveNameToIndexMap.insert(std::pair<std::string,unsigned int>(waveNames[i],i));
+	};
+	_nmbEvents = 0;
+	_integrals.resize(extents[_nmbWaves][_nmbWaves]);
+	for(size_t iWave = 0;iWave<_nmbWaves;++iWave){
+		for(size_t jWave = 0; jWave<_nmbWaves;++jWave){
+			_integrals[iWave][jWave] = std::complex<double>(0.,0.);
+		};
+	};
+	printSucc<<"ampIntegralMatrix initilized"<<std::endl;
+	return true;
+};
+
+bool ampIntegralMatrix::addEventAmplitudes(const std::vector<std::complex<double> > amplitudes){
+	if (not amplitudes.size() == _nmbWaves){
+		printErr<<"wrong number of amplitudes given: "<<amplitudes.size()<< " != "<<_nmbWaves<<std::endl;
+		return false;
+	};
+	for(size_t iWave = 0;iWave<_nmbWaves;++iWave){
+		for(size_t jWave = 0; jWave<_nmbWaves;++jWave){
+//			std::cout<<"Addieren Sie, addieren Sie!!! "<<amplitudes[iWave]*std::conj(amplitudes[jWave])<<std::endl;
+			_integrals[iWave][jWave]+= amplitudes[iWave]*std::conj(amplitudes[jWave]);
+		};
+	};
+	++_nmbEvents;
+	return true;
+};
 
 bool
 ampIntegralMatrix::integrate(const vector<TTree*>&           ampTrees,
@@ -263,24 +304,19 @@ ampIntegralMatrix::integrate(const vector<TTree*>&           ampTrees,
                              const unsigned long             maxNmbEvents,
                              const string&                   weightFileName)
 {
+	if (not initialize(waveNames)){
+		printWarn<<"could not initialize the wave names"<<std::endl;
+		return false;
+	};
 	if (ampTrees.size() > 0)
 		printInfo << "calculating integral for " << ampTrees.size() << " amplitude(s)" << endl;
 	else {
 		printWarn << "did not receive any amplitude trees. cannot calculate integral." << endl;
 		return false;
 	}
-	if (waveNames.size() != ampTrees.size()) {
+	if (_waveNames.size() != ampTrees.size()) {
 		printErr << "number of amplitude trees does not match the number of waves in integral matrix." << endl;
 		return false;
-	}
-	for(unsigned int i=0; i < waveNames.size(); i++) {
-		if (waveNames[i] == "") {
-			printErr << "can not add empty wave name.";
-			return false;
-		}
-		_nmbWaves += 1;
-		_waveNames.push_back(waveNames[i]);
-		_waveNameToIndexMap.insert( std::pair<std::string, unsigned int> (waveNames[i], _nmbWaves-1) );
 	}
 	const unsigned long nmbEvents = (unsigned long) ampTrees[0]->GetEntries();
 	if (nmbEvents == 0) {
@@ -310,7 +346,7 @@ ampIntegralMatrix::integrate(const vector<TTree*>&           ampTrees,
 
 	// resize integral matrix
 	//_integrals.clear();
-	_integrals.resize(extents[_nmbWaves][_nmbWaves]);
+
 
 	// open importance sampling weight file
 	//!!! this should be provided as a friend tree for the amlitudes

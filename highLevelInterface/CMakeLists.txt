@@ -61,6 +61,8 @@ endif()
 set(SOURCES
 	calcAmplitude.cc
 	pwaFit.cc
+	pwaNloptFit.cc
+	calcMultipleAmplitudes.cc
 	)
 if(USE_NLOPT)
 	LIST(APPEND SOURCES pwaNloptFit.cc)

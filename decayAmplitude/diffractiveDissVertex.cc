@@ -46,7 +46,7 @@
 #include "reportingUtilsRoot.hpp"
 #include "diffractiveDissVertex.h"
 
-
+#include "physUtils.hpp"
 using namespace std;
 using namespace rpwa;
 
@@ -336,3 +336,12 @@ diffractiveDissVertex::printPointers(ostream& out) const
 	    << "recoil particle = " << recoil()    << endl;
 	return out;
 }
+
+double diffractiveDissVertex::getTprime() const{
+	const TLorentzVector lvBeam = TLorentzVector(beam()->lzVec());
+	const TLorentzVector lvTarget = TLorentzVector(target()->lzVec()); 
+	const TLorentzVector lvOut = TLorentzVector(XParticle()->lzVec());
+
+	
+	return tPrime(lvBeam,lvTarget,lvOut);
+};

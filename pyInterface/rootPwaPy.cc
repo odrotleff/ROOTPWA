@@ -43,6 +43,9 @@
 #include "pwaNloptFit_py.h"
 #endif
 
+#include "calcMultipleAmplitudes_py.h"
+#include "tPrime_py.h"
+
 namespace bp = boost::python;
 
 BOOST_PYTHON_MODULE(libRootPwaPy){
@@ -83,6 +86,9 @@ BOOST_PYTHON_MODULE(libRootPwaPy){
 	rpwa::py::exportCalcAmplitude();
 	rpwa::py::exportPwaLikelihood();
 	rpwa::py::exportPwaFit();
+	rpwa::py::exportPwaNloptFit();
+	rpwa::py::exportCalcMultipleAmplitudes();
+	rpwa::py::exportTprime();
 #ifdef USE_NLOPT
 	rpwa::py::exportPwaNloptFit();
 #endif

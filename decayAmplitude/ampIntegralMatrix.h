@@ -46,6 +46,7 @@
 #ifndef __CINT__
 #define BOOST_DISABLE_ASSERTS
 #include <boost/multi_array.hpp>
+#include <sumAccumulators.hpp>
 #endif
 
 #include "TObject.h"
@@ -60,7 +61,6 @@ namespace rpwa {
 
 
 namespace rpwa {
-
 
 	class ampIntegralMatrix : public TObject {
 
@@ -123,6 +123,8 @@ namespace rpwa {
 		                             const std::string& waveNameJ)  const  ///< returns integral matrix element divided by number of events defined by pair of wave names
 		{ return element(waveIndex(waveNameI), waveIndex(waveNameJ)); }
 
+		bool initialize(const std::vector<std::string>& waveNames);
+		bool addEventAmplitudes(const std::vector<std::complex<double> > amplitudes);
 		bool integrate(const std::vector<TTree*>&      ampTrees,
 		               const std::vector<std::string>& waveNames,
 		               const unsigned long             maxNmbEvents   = 0,
@@ -170,7 +172,6 @@ namespace rpwa {
 
 
 		ClassDef(ampIntegralMatrix,1)
-
 	};
 
 
