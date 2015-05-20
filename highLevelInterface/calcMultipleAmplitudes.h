@@ -24,7 +24,7 @@ namespace rpwa {
 											const int 				maxNmbEvents = -1);
 
 		std::vector<double> getTprimesFromTree(					const eventMetadata* 			eventMeta,
-											isobarAmplitudePtr			amplitude,
+											isobarDecayTopologyPtr			topology,
 											const long int				maxNmbEvents = -1,
 											const std::string& 			treePerfStatOutFileName = "",
 											const long int 				treeCacheSize = 25000000);

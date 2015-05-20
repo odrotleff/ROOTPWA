@@ -240,23 +240,36 @@ std::vector<double> rpwa::hli::getTprimesFromFiles(					const std::string			file
 											const std::string			keyFile,
 											const long int				maxNmbEvents){
 
-	std::vector<std::string> vectorKey(1,keyFile);
-	std::vector<isobarAmplitudePtr> amplitudes = getAmplitudesFromKeyFiles(vectorKey);
+/*
+	size_t nWaves = keyFiles.size();
+	std::vector<rpwa::isobarAmplitudePtr>returnValue(nWaves,rpwa::isobarAmplitudePtr());
+	waveDescription description = waveDescription();
+	rpwa::isobarDecayTopologyPtr topology;
+	for (size_t wave=0;wave<nWaves;++wave){
+		description.parseKeyFile(keyFiles[wave]);
+		description.constructAmplitude(returnValue[wave]);
+		returnValue[wave]->init();
+		description.constructDecayTopology(topology);
+	};
+*/
+	waveDescription description = waveDescription();
+	rpwa::isobarDecayTopologyPtr topology;
+	description.parseKeyFile(keyFile);
+	description.constructDecayTopology(topology);
 	TFile* inFile = new TFile(fileName.c_str(),"READ");
 	const eventMetadata* actData = eventMetadata::readEventFile(inFile);
-
-	return getTprimesFromTree(actData, amplitudes[0],maxNmbEvents);
+	return getTprimesFromTree(actData, topology,maxNmbEvents);
 };
 
 
 std::vector<double> rpwa::hli::getTprimesFromTree(					const rpwa::eventMetadata* 		eventMeta,
-											isobarAmplitudePtr			amplitude,
+											rpwa::isobarDecayTopologyPtr		topology,
 											const long int				maxNmbEvents,
 											const std::string& 			treePerfStatOutFileName,
 											const long int 				treeCacheSize){
 
-	if (not amplitude){
-		printWarn<<"no amplitude given, abort."<<std::endl;
+	if (not topology){
+		printWarn<<"no topology given, abort."<<std::endl;
 		return std::vector<double>();
 	};
 	if (not eventMeta){
@@ -291,13 +304,13 @@ std::vector<double> rpwa::hli::getTprimesFromTree(					const rpwa::eventMetadata
 
 	// loop over events
 
-	if(not amplitude->decayTopology()->initKinematicsData((*eventMeta).productionKinematicsParticleNames(), (*eventMeta).decayKinematicsParticleNames())){
+	if(not topology->initKinematicsData((*eventMeta).productionKinematicsParticleNames(), (*eventMeta).decayKinematicsParticleNames())){
 		printWarn << "problems initializing input data. cannot read input data." << std::endl;
 		return std::vector<double>();
 	};
 	const long int    nmbEventsTree     = tree->GetEntries();
 	const long int    nmbEvents         = ((maxNmbEvents > 0) ? std::min(maxNmbEvents, nmbEventsTree) : nmbEventsTree);
-	std::vector<double> ret(nmbEvents);
+	std::vector<double> returnVector(nmbEvents);
 	for(long int eventIndex = 0; eventIndex < nmbEvents; ++eventIndex){
 		if(tree->LoadTree(eventIndex) < 0) {
 			break;
@@ -313,11 +326,13 @@ std::vector<double> rpwa::hli::getTprimesFromTree(					const rpwa::eventMetadata
 			          << "skipping event." << std::endl;
 			return std::vector<double>();
 		};
-		if (not amplitude->decayTopology()->readKinematicsData(*prodKinMomenta,*decayKinMomenta)){
+		if (not topology->readKinematicsData(*prodKinMomenta,*decayKinMomenta)){
 			printWarn<< "could not set kinematics for event "<<eventIndex<<std::endl;
-			return ret;
+			return returnVector;
 		};
-		ret[eventIndex] = amplitude->decayTopology()->getTprime();
+		topology->calcIsobarLzVec();
+
+		returnVector[eventIndex] = topology->getTprime();
 		if (eventIndex%1000==0){
 			printInfo<<eventIndex<<std::endl;
 		};	
@@ -327,7 +342,7 @@ std::vector<double> rpwa::hli::getTprimesFromTree(					const rpwa::eventMetadata
 		delete treePerfStats;
 	};
 
-	return ret;
+	return returnVector;
 
 
 
