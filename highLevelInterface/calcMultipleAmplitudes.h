@@ -15,19 +15,11 @@
 #include"ampIntegralMatrix.h"
 namespace rpwa {
 	namespace hli {
-		void firstTryAgain();
-
 		bool getIntegralsFromKeyFiles(						const std::string			integralName,
 											const std::string			outFileName,
 											const std::vector<std::string> 		&keyFiles, 
 											const std::vector<std::string> 		&eventFiles, 
 											const int 				maxNmbEvents = -1);
-
-		std::vector<double> getTprimesFromTree(					const eventMetadata* 			eventMeta,
-											isobarDecayTopologyPtr			topology,
-											const long int				maxNmbEvents = -1,
-											const std::string& 			treePerfStatOutFileName = "",
-											const long int 				treeCacheSize = 25000000);
 
 		std::vector<rpwa::isobarAmplitudePtr> getAmplitudesFromKeyFiles(const std::vector<std::string> &keyFiles);
 		std::vector<std::string> waveNamesFromKeyFiles(const std::vector<std::string> &keyFiles,bool newConvention = false);
@@ -44,9 +36,5 @@ namespace rpwa {
 							const long int					startEvent				=  0,
 							const std::string& 				treePerfStatOutFileName			= "", 
 							const long int 					treeCacheSize 				= 25000000);
-
-		std::vector<double> getTprimesFromFiles(				const std::string			fileName,
-											const std::string			keyFile,
-											const long int				maxNmbEvents);
 	};
 };

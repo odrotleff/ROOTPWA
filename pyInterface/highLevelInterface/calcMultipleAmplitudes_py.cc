@@ -4,10 +4,6 @@
 
 #include<iostream>
 namespace bp = boost::python;
-void write_voila(){
-	rpwa::hli::firstTryAgain();
-};
-
 bool getIntegralsFromKeyFiles_py(	const std::string	integralName,
 					const std::string	outFileName,
 					const bp::object	keyFilesPy,
@@ -27,26 +23,10 @@ bool getIntegralsFromKeyFiles_py(	const std::string	integralName,
 		return rpwa::hli::getIntegralsFromKeyFiles(integralName, outFileName, vectorKeyFiles ,vectorEventFiles ,maxNmbEnvents);
 };
 
-bp::list getTprimesFromFiles_py(	const std::string dataFile, const std::string keyFile, const long int maxnNmbEvents){
-
-	return bp::list(rpwa::hli::getTprimesFromFiles(dataFile, keyFile,maxnNmbEvents));
-};
-					
 
 void rpwa::py::exportCalcMultipleAmplitudes(){
 	bp::def(
-		"calcMultipleAmplitudes"
-		, &write_voila
-	);
-	
-
-	bp::def(
 		"getIntegralsFromKeyFiles"
 		, & getIntegralsFromKeyFiles_py
-	);
-
-	bp::def(
-		"getTprimesFromFiles"
-		, &getTprimesFromFiles_py
 	);
 };
