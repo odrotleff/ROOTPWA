@@ -120,6 +120,7 @@ waveDescription::waveDescription(const waveDescription& waveDesc)
 {
 	//waveDescription::Class()->IgnoreTObjectStreamer();  // don't store TObject's fBits and fUniqueID
 	parseKeyFileContent(_keyFileLocalCopy);
+}
 
 
 waveDescription::waveDescription(const amplitudeMetadata* amplitudeMeta)
@@ -134,8 +135,9 @@ waveDescription::waveDescription(const amplitudeMetadata* amplitudeMeta)
 
 waveDescription::~waveDescription()
 {
-	if (_key)
+	if (_key) {
 		delete _key;
+	}
 }
 
 

@@ -69,13 +69,14 @@ namespace rpwa {
 		typedef typename complexT::value_type value_type;
 
 		// define array types
-		typedef boost::multi_array<std::string,                    2> waveNameArrayType;    // array for wave names
-		typedef boost::multi_array<double,                         2> waveThrArrayType;     // array for wave thresholds
-		typedef boost::multi_array<unsigned int,                   2> waveToIntMapType;     // array for mapping of waves to integral indices
-		typedef boost::multi_array<boost::tuples::tuple<int, int>, 3> ampToParMapType;      // array for mapping of amplitudes to parameters
-		typedef boost::multi_array<complexT,                       3> ampsArrayType;        // array for production and decay amplitudes
-		typedef boost::multi_array<complexT,                       4> normMatrixArrayType;  // array for normalization matrices
-		typedef boost::multi_array<value_type,                     2> phaseSpaceIntType;    // array for phase space integrals
+		typedef boost::multi_array<std::string,                           2> waveNameArrayType;    // array for wave names
+		typedef boost::multi_array<double,                                2> waveThrArrayType;     // array for wave thresholds
+		typedef boost::multi_array<unsigned int,                          2> waveToIntMapType;     // array for mapping of waves to integral indices
+		typedef boost::multi_array<boost::tuples::tuple<int, int>,        3> ampToParMapType;      // array for mapping of amplitudes to parameters
+		typedef boost::multi_array<complexT,                              3> ampsArrayType;        // array for production and decay amplitudes
+		typedef boost::multi_array<complexT,                              4> normMatrixArrayType;  // array for normalization matrices
+		typedef boost::multi_array<value_type,                            2> phaseSpaceIntType;    // array for phase space integrals
+		typedef std::map<std::string, std::pair<unsigned int, unsigned int>> waveParamsType;       // array for wave names
 
 
 	public:
@@ -166,13 +167,18 @@ namespace rpwa {
 		static void   setQuiet         (const bool      flag       = true) { _debug             = !flag;     }
 
 		// operations
-		bool init(const unsigned int rank,
-		          const std::map<std::string, std::string>& ampFileList,
-		          const double       massBinCenter,
-		          const std::string& waveListFileName,
-		          const std::string& normIntFileName,
-		          const std::string& accIntFileName,
-		          const unsigned int numbAccEvents = 0);  ///< prepares all internal data structures
+		bool init(const unsigned int                        rank,
+		          const double                              massBinCenter,
+				  const std::vector<rpwa::waveDescription>& waveDescriptions,
+		          const std::vector<double>&                waveThresholds);  ///< prepares all internal data structures
+
+		bool addAmplitude(TTree* tree, const rpwa::amplitudeMetadata& meta);
+
+		bool addNormIntegral(const rpwa::ampIntegralMatrix& normMatrix);
+
+		bool addAccIntegral(rpwa::ampIntegralMatrix& accMatrix);
+
+		bool rescaleIntegrals();
 
 		void getIntegralMatrices(rpwa::complexMatrix&       normMatrix,
 		                         rpwa::complexMatrix&       accMatrix,
@@ -194,14 +200,10 @@ namespace rpwa {
 	private:
 
 		// helper functions
-		bool readWaveList       (const std::string& waveListFileName);  ///< reads wave names and thresholds from wave list file
+		bool readWaveList       (const std::vector<rpwa::waveDescription>& waveDescriptionInc, const std::vector<double>& waveThresholds);  ///< reads wave names and thresholds from wave list file
 		bool buildParDataStruct (const unsigned int rank,
 		                         const double       massBinCenter);     ///< builds parameter data structures
-		bool readIntegrals      (const std::string& normIntFileName,
-		                         const std::string& accIntFileName);  ///< reads normalization and acceptance integrals from file
-
-		bool readDecayAmplitudes(const std::map<std::string, std::string>& ampFileList);  ///< reads decay amplitudes from files in specified directory
-
+		bool readIntegrals      (const ampIntegralMatrix& normIntFileName);  ///< reads normalization and acceptance integrals from file
 
 		void clear();
 
@@ -245,6 +247,7 @@ namespace rpwa {
 		std::vector<std::string> _parNames;             // function parameter names
 		std::vector<double>      _parThresholds;        // mass thresholds of parameters
 		std::vector<bool>        _parFixed;             // parameter fixed due to mass thresholds
+		waveParamsType           _waveParams;
 		ampToParMapType          _prodAmpToFuncParMap;  // maps each production amplitude to the indices
 		                                                // of its real and imginary part in the parameter
 		                                                // array; negative indices mean that the parameter
@@ -259,7 +262,6 @@ namespace rpwa {
 		normMatrixArrayType _normMatrix;          // normalization matrix w/o acceptance [reflectivity 1][wave index 1][reflectivity 2][wave index 2]
 		normMatrixArrayType _accMatrix;           // normalization matrix with acceptance [reflectivity 1][wave index 1][reflectivity 2][wave index 2]
 		phaseSpaceIntType   _phaseSpaceIntegral;  // phase space integrals
-
 		mutable functionCallInfo _funcCallInfo[NMB_FUNCTIONCALLENUM];  // collects function call statistics
 
 	};

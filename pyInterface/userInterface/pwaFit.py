@@ -16,6 +16,7 @@ if __name__ == "__main__":
 	parser.add_argument("outputFileName", type=str, metavar="fileName", help="path to output file")
 	parser.add_argument("-c", type=str, metavar="configFileName", dest="configFileName", default="./rootpwa.config", help="path to config file (default: './rootpwa.config')")
 	parser.add_argument("-b", type=int, metavar="#", dest="binID", default=0, help="bin ID of fit (default: 0)")
+	parser.add_argument("-n", type=int, metavar="#", dest="nEvents", default=0, help="maximum number of events to process (default: all)")
 	parser.add_argument("-s", type=int, metavar="#", dest="seed", default=0, help="random seed (default: 0)")
 	parser.add_argument("-w", type=str, metavar="path", dest="waveListFileName", default="", help="path to wavelist file (default: none)")
 	parser.add_argument("-S", type=str, metavar="path", dest="startValFileName", default="", help="path to start value fit result file (default: none)")
@@ -54,26 +55,19 @@ if __name__ == "__main__":
 	psIntegralPath  = fileManager.getIntegralFilePath(args.binID, pyRootPwa.core.eventMetadata.GENERATED)
 	accIntegralPath = fileManager.getIntegralFilePath(args.binID, pyRootPwa.core.eventMetadata.ACCEPTED)
 
-	likelihood = pyRootPwa.core.pwaLikelihood()
-	if (not args.verbose):
-		likelihood.setQuiet(True)
-	if (not likelihood.init(
-	                        args.rank,
-	                        ampFileList,
-	                        massBinCenter,
-	                        args.waveListFileName,
-	                        psIntegralPath,
-	                        accIntegralPath,
-	                        args.accEventsOverride)):
-		printErr("could not initialize likelihood. Aborting...")
-		sys.exit(1)
 	fitResult = pyRootPwa.pwaFit(
-	                             likelihood,
+	                             ampFileList = ampFileList,
+	                             normIntegralFileName = psIntegralPath,
+	                             accIntegralFileName = accIntegralPath,
+	                             binningMap = binningMap,
+	                             waveListFileName = args.waveListFileName,
+	                             keyFiles = fileManager.getKeyFiles(),
 	                             seed = args.seed,
-	                             massBinLower = binningMap['mass'][0],
-	                             massBinUpper = binningMap['mass'][1],
+	                             maxNmbEvents = args.nEvents,
 	                             startValFileName = args.startValFileName,
+	                             accEventsOverride = args.accEventsOverride,
 	                             checkHessian = args.checkHessian,
+	                             rank = args.rank,
 	                             verbose = args.verbose
 	                             )
 	printInfo("writing result to '" + args.outputFileName + "'")
