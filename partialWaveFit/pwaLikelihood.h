@@ -69,14 +69,15 @@ namespace rpwa {
 		typedef typename complexT::value_type value_type;
 
 		// define array types
-		typedef boost::multi_array<std::string,                           2> waveNameArrayType;    // array for wave names
-		typedef boost::multi_array<double,                                2> waveThrArrayType;     // array for wave thresholds
-		typedef boost::multi_array<unsigned int,                          2> waveToIntMapType;     // array for mapping of waves to integral indices
-		typedef boost::multi_array<boost::tuples::tuple<int, int>,        3> ampToParMapType;      // array for mapping of amplitudes to parameters
-		typedef boost::multi_array<complexT,                              3> ampsArrayType;        // array for production and decay amplitudes
-		typedef boost::multi_array<complexT,                              4> normMatrixArrayType;  // array for normalization matrices
-		typedef boost::multi_array<value_type,                            2> phaseSpaceIntType;    // array for phase space integrals
-		typedef std::map<std::string, std::pair<unsigned int, unsigned int>> waveParamsType;       // array for wave names
+		typedef boost::multi_array<std::string,                           2> waveNameArrayType;     // array for wave names
+		typedef boost::multi_array<double,                                2> waveThrArrayType;      // array for wave thresholds
+		typedef boost::multi_array<unsigned int,                          2> waveToIntMapType;      // array for mapping of waves to integral indices
+		typedef boost::multi_array<boost::tuples::tuple<int, int>,        3> ampToParMapType;       // array for mapping of amplitudes to parameters
+		typedef boost::multi_array<complexT,                              3> ampsArrayType;         // array for production and decay amplitudes
+		typedef boost::multi_array<complexT,                              4> normMatrixArrayType;   // array for normalization matrices
+		typedef boost::multi_array<value_type,                            2> phaseSpaceIntType;     // array for phase space integrals
+		typedef boost::multi_array<bool,                                  2> waveNameBoolArrayType; // array for wave names
+		typedef std::map<std::string, std::pair<unsigned int, unsigned int>> waveParamsType;        // array for wave names
 
 
 	public:
@@ -167,18 +168,18 @@ namespace rpwa {
 		static void   setQuiet         (const bool      flag       = true) { _debug             = !flag;     }
 
 		// operations
-		bool init(const unsigned int                        rank,
-		          const double                              massBinCenter,
-				  const std::vector<rpwa::waveDescription>& waveDescriptions,
-		          const std::vector<double>&                waveThresholds);  ///< prepares all internal data structures
+		bool init(const std::vector<rpwa::waveDescription>& waveDescriptions,
+		          const std::vector<double>&                waveThresholds,
+		          const unsigned int                        rank,
+		          const double                              massBinCenter);  ///< prepares all internal data structures
 
 		bool addAmplitude(TTree* tree, const rpwa::amplitudeMetadata& meta);
 
 		bool addNormIntegral(const rpwa::ampIntegralMatrix& normMatrix);
 
-		bool addAccIntegral(rpwa::ampIntegralMatrix& accMatrix);
+		bool addAccIntegral(rpwa::ampIntegralMatrix& accMatrix, unsigned int accEventsOverride);
 
-		bool rescaleIntegrals();
+		bool finishInit();
 
 		void getIntegralMatrices(rpwa::complexMatrix&       normMatrix,
 		                         rpwa::complexMatrix&       accMatrix,
@@ -223,13 +224,17 @@ namespace rpwa {
 
 		void resetFuncCallInfo() const;
 
-		unsigned int _nmbEvents;        // number of events
-		unsigned int _rank;             // rank of spin density matrix
-		unsigned int _nmbWaves;         // number of waves
-		unsigned int _nmbWavesRefl[2];  // number of negative (= 0) and positive (= 1) reflectivity waves
-		unsigned int _nmbWavesReflMax;  // maximum of number of negative and positive reflectivity waves
-		unsigned int _nmbPars;          // number of function parameters
-		unsigned int _nmbParsFixed;     // number of fixed function parameters
+		unsigned int _nmbEvents;         // number of events
+		unsigned int _rank;              // rank of spin density matrix
+		unsigned int _nmbWaves;          // number of waves
+		unsigned int _nmbWavesRefl[2];   // number of negative (= 0) and positive (= 1) reflectivity waves
+		unsigned int _nmbWavesReflMax;   // maximum of number of negative and positive reflectivity waves
+		unsigned int _nmbPars;           // number of function parameters
+		unsigned int _nmbParsFixed;      // number of fixed function parameters
+		bool         _initialized;       // was init method called?
+		bool         _normIntAdded;      // was normalization integral matrix added?
+		bool         _accIntAdded;       // was acceptance integral matrix added?
+		bool         _initFinished;      // was initialization finished?
 
 	#ifdef USE_CUDA
 		bool                _cudaEnabled;        // if true CUDA kernels are used for some calculations
@@ -244,6 +249,7 @@ namespace rpwa {
 
 		waveNameArrayType        _waveNames;            // wave names [reflectivity][wave index]
 		waveThrArrayType         _waveThresholds;       // mass thresholds of waves
+		waveNameBoolArrayType    _waveNameAmpAdded;     // was amplitude with this wavename added?
 		std::vector<std::string> _parNames;             // function parameter names
 		std::vector<double>      _parThresholds;        // mass thresholds of parameters
 		std::vector<bool>        _parFixed;             // parameter fixed due to mass thresholds

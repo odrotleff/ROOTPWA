@@ -8,10 +8,10 @@ def readWaveList(waveListFileName, keyFiles):
 	pyRootPwa.utils.printInfo("reading amplitude names and thresholds from wave list file "
 	          + "'" + waveListFileName + "'.")
 	with open(waveListFileName, 'r') as waveListFile:
-# 	if (not waveListFile) {
-# 		printErr << "cannot open file '" << waveListFileName << "'. aborting." << endl;
-# 		throw;
-# 	}
+#	if (not waveListFile) {
+#		printErr << "cannot open file '" << waveListFileName << "'. aborting." << endl;
+#		throw;
+#	}
 		waveNames = []
 		waveDescriptions = []
 		waveThresholds = []
@@ -52,27 +52,30 @@ def pwaFit(ampFileList, normIntegralFileName, accIntegralFileName, binningMap, w
 	likelihood.useNormalizedAmps(True)
 	if (not verbose):
 		likelihood.setQuiet()
-	if (not likelihood.init(
+	if (not likelihood.init(waveDescriptions,
+	                        waveThresholds,
 	                        rank,
-	                        massBinCenter,
-	                        waveDescriptions,
-	                        waveThresholds)):
+	                        massBinCenter)):
 		printErr("could not initialize likelihood. Aborting...")
-		sys.exit(1)
+		return False
 
 	normIntFile = ROOT.TFile.Open(normIntegralFileName, "READ")
 	if len(normIntFile.GetListOfKeys()) != 1:
 		pyRootPwa.utils.printWarn("'" + normIntegralFileName + "' does not contain exactly one TKey.")
 		return False
 	normIntMatrix = normIntFile.Get(pyRootPwa.core.ampIntegralMatrix.integralObjectName)
-	likelihood.addNormIntegral(normIntMatrix)
+	if (not likelihood.addNormIntegral(normIntMatrix)):
+		pyRootPwa.utils.printErr("could not add normalization integral. Aborting...")
+		return False
 	normIntFile.Close()
 	accIntFile = ROOT.TFile.Open(accIntegralFileName, "READ")
 	if len(accIntFile.GetListOfKeys()) != 1:
 		pyRootPwa.utils.printWarn("'" + normIntegralFileName + "' does not contain exactly one TKey.")
 		return False
 	accIntMatrix = accIntFile.Get(pyRootPwa.core.ampIntegralMatrix.integralObjectName)
-	likelihood.addAccIntegral(accIntMatrix)
+	if (not likelihood.addAccIntegral(accIntMatrix, accEventsOverride)):
+		pyRootPwa.utils.printErr("could not add acceptance integral. Aborting...")
+		return False
 	accIntFile.Close()
 
 	for waveName in waveNames:
@@ -88,8 +91,12 @@ def pwaFit(ampFileList, normIntegralFileName, accIntegralFileName, binningMap, w
 		if not tree:
 			pyRootPwa.utils.printErr("could not get amplitude tree for waveName '" + waveName + "'.")
 			return False
-		likelihood.addAmplitude(tree, meta)
-	likelihood.rescaleIntegrals()
+		if (not likelihood.addAmplitude(tree, meta)):
+			pyRootPwa.utils.printErr("could not add amplitude '" + waveName + "'. Aborting...")
+			return False
+	if (not likelihood.finishInit()):
+		pyRootPwa.utils.printErr("could not finish initialization of likelihood. Aborting...")
+		return False
 	lowerBound = binningMap[binningMap.keys()[0]][0]
 	upperBound = binningMap[binningMap.keys()[0]][1]
 	fitResult = pyRootPwa.core.pwaFit(
@@ -101,4 +108,3 @@ def pwaFit(ampFileList, normIntegralFileName, accIntegralFileName, binningMap, w
 	                                  verbose = verbose
 	                                  )
 	return fitResult
-	return False

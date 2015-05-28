@@ -70,6 +70,9 @@ if __name__ == "__main__":
 	                             rank = args.rank,
 	                             verbose = args.verbose
 	                             )
+	if (not fitResult):
+		printErr("didn't get a valid fit result. Aborting...")
+		sys.exit(1)
 	printInfo("writing result to '" + args.outputFileName + "'")
 	valTreeName   = "pwa"
 	valBranchName = "fitResult_v2"

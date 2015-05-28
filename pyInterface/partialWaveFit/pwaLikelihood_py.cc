@@ -12,10 +12,10 @@ namespace {
 
 	bool
 	pwaLikelihood_init(rpwa::pwaLikelihood<std::complex<double> >& self,
-	                   const unsigned int                          rank,
-	                   const double                                massBinCenter,
 	                   bp::object                                  pyWaveDescriptions,
-	                   bp::object                                  pyWaveThresholds)
+	                   bp::object                                  pyWaveThresholds,
+	                   const unsigned int                          rank,
+	                   const double                                massBinCenter)
 	{
 		std::vector<rpwa::waveDescription> vectorWaveDescriptions;
 		if(not rpwa::py::convertBPObjectToVector<rpwa::waveDescription>(pyWaveDescriptions, vectorWaveDescriptions)) {
@@ -28,7 +28,7 @@ namespace {
 			bp::throw_error_already_set();
 		}
 
-		return self.init(rank, massBinCenter, vectorWaveDescriptions, vectorWaveThresholds);
+		return self.init(vectorWaveDescriptions, vectorWaveThresholds, rank, massBinCenter);
 	}
 
 	bool
@@ -43,14 +43,14 @@ namespace {
 	}
 
 	bool
-	pwaLikelihood_addAccIntegral(rpwa::pwaLikelihood<std::complex<double> >& self, PyObject* pyAccMatrix)
+	pwaLikelihood_addAccIntegral(rpwa::pwaLikelihood<std::complex<double> >& self, PyObject* pyAccMatrix, unsigned int accEventsOverride)
 	{
 		rpwa::ampIntegralMatrix* accMatrix = rpwa::py::convertFromPy<rpwa::ampIntegralMatrix* >(pyAccMatrix);
 		if(not accMatrix) {
 			PyErr_SetString(PyExc_TypeError, "Got invalid input for accMatrix when executing rpwa::pwaLikelihood::addAccIntegral()");
 			bp::throw_error_already_set();
 		}
-		return self.addAccIntegral(*accMatrix);
+		return self.addAccIntegral(*accMatrix, accEventsOverride);
 	}
 
 	bool
@@ -169,15 +169,18 @@ void rpwa::py::exportPwaLikelihood() {
 	bp::class_<rpwa::pwaLikelihood<std::complex<double> > >("pwaLikelihood")
 		.def("init",
 		     ::pwaLikelihood_init,
-		     (bp::arg("rank"),
-		      bp::arg("massBinCenter"),
-		      bp::arg("waveDescriptions"),
-		      bp::arg("waveThresholds"))
-		     )
+		     (bp::arg("waveDescriptions"),
+		      bp::arg("waveThresholds"),
+		      bp::arg("rank")=1,
+		      bp::arg("massBinCenter")=0.)
+		)
 		.def("addNormIntegral", ::pwaLikelihood_addNormIntegral)
-		.def("addAccIntegral", ::pwaLikelihood_addAccIntegral)
+		.def("addAccIntegral", ::pwaLikelihood_addAccIntegral,
+			     (bp::arg("accMatrix"),
+			      bp::arg("accEventsOverride")=0)
+		)
 		.def("addAmplitude", ::pwaLikelihood_addAmplitude)
-		.def("rescaleIntegrals", &rpwa::pwaLikelihood<std::complex<double> >::rescaleIntegrals)
+		.def("finishInit", &rpwa::pwaLikelihood<std::complex<double> >::finishInit)
 		.def("Gradient", ::pwaLikelihood_Gradient)
 		.def("FdF", ::pwaLikelihood_FdF)
 		.def("DoEval", ::pwaLikelihood_DoEval)

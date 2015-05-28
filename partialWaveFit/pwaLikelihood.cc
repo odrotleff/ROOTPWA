@@ -109,6 +109,10 @@ pwaLikelihood<complexT>::pwaLikelihood()
 	  _nmbWaves         (0),
 	  _nmbWavesReflMax  (0),
 	  _nmbPars          (0),
+	  _initialized(false),
+	  _normIntAdded(false),
+	  _accIntAdded(false),
+	  _initFinished(false),
 #ifdef USE_CUDA
 	  _cudaEnabled      (false),
 #endif
@@ -283,6 +287,10 @@ template<typename complexT>
 double
 pwaLikelihood<complexT>::DoEval(const double* par) const
 {
+	if (not _initFinished) {
+		printErr << "pwaLikelihood::finishInit has not been called. Aborting..." << endl;
+		throw;
+	}
 	++(_funcCallInfo[DOEVAL].nmbCalls);
 
 #ifdef USE_FDF
@@ -943,10 +951,10 @@ pwaLikelihood<complexT>::cudaEnabled() const
 
 template<typename complexT>
 bool
-pwaLikelihood<complexT>::init(const unsigned int                        rank,
-                              const double                              massBinCenter,
-                              const std::vector<rpwa::waveDescription>& waveDescriptions,
-                              const std::vector<double>&                waveThresholds)
+pwaLikelihood<complexT>::init(const std::vector<rpwa::waveDescription>& waveDescriptions,
+                              const std::vector<double>&                waveThresholds,
+                              const unsigned int                        rank=1,
+                              const double                              massBinCenter=0.)
 {
 	if (not readWaveList(waveDescriptions, waveThresholds)) return false;
 	if (not buildParDataStruct(rank, massBinCenter)) return false;
@@ -957,6 +965,7 @@ pwaLikelihood<complexT>::init(const unsigned int                        rank,
 			(reinterpret_cast<cuda::complex<value_type>*>(_decayAmps.data()),
 			 _decayAmps.num_elements(), _nmbEvents, _nmbWavesRefl, true);
 #endif
+	_initialized = true;
 	return true;
 }
 
@@ -964,6 +973,10 @@ pwaLikelihood<complexT>::init(const unsigned int                        rank,
 template<typename complexT>
 bool
 pwaLikelihood<complexT>::addAmplitude(TTree* tree, const rpwa::amplitudeMetadata& meta) {
+	if (not _accIntAdded) {
+		printErr << "acceptance integral not added. Call pwaLikelihood::addAccIntegral() before pwaLikelihood::addAmplitude()! Aborting..." << endl;
+		return false;
+	}
 	const std::string waveName = meta.objectBaseName();
 	const unsigned int refl = _waveParams[waveName].first;
 	const unsigned int waveIndex = _waveParams[waveName].second;
@@ -1003,6 +1016,7 @@ pwaLikelihood<complexT>::addAmplitude(TTree* tree, const rpwa::amplitudeMetadata
 	_decayAmps.resize(extents[_nmbEvents][2][_nmbWavesReflMax]);
 	for (unsigned int iEvt = 0; iEvt < _nmbEvents; ++iEvt)
 		_decayAmps[iEvt][refl][waveIndex] = amps[iEvt];
+	_waveNameAmpAdded[refl][waveIndex] = true; // note that this amplitude has been added to the likelihood
 	if (_debug)
 		printDebug << "read " << _nmbEvents << " events for wave "
 				   << "'" << waveName << "'" << endl;
@@ -1015,21 +1029,31 @@ template<typename complexT>
 bool
 pwaLikelihood<complexT>::addNormIntegral(const rpwa::ampIntegralMatrix& normMatrix) {
 
+	if (not _initialized) {
+		printErr << "likelihood not initialized. Call pwaLikelihood::init() before pwaLikelihood::addNormIntegral()! Aborting..." << endl;
+		return false;
+	}
 	_numbAccEvents = normMatrix.nmbEvents();
 	reorderIntegralMatrix(normMatrix, _normMatrix);
+	_normIntAdded = true;
 	return true;
 }
 
 
 template<typename complexT>
 bool
-pwaLikelihood<complexT>::addAccIntegral(rpwa::ampIntegralMatrix& accMatrix) {
+pwaLikelihood<complexT>::addAccIntegral(rpwa::ampIntegralMatrix& accMatrix, unsigned int accEventsOverride=0) {
 
+	if (not _normIntAdded) {
+		printErr << "normalization integral not added before acceptance integral. Call pwaLikelihood::addNormIntegral() before pwaLikelihood::addAccIntegral()! Aborting..." << endl;
+		return false;
+	}
+	_numbAccEvents = accEventsOverride==0 ? _numbAccEvents : accEventsOverride;
 	_totAcc = (double) accMatrix.nmbEvents() / _numbAccEvents;
 	accMatrix.setNmbEvents(_numbAccEvents);
 	printInfo << "total acceptance in this bin: " << _totAcc << endl;
 	reorderIntegralMatrix(accMatrix, _accMatrix);
-//	rescaleIntegrals();
+	_accIntAdded = true;
 	return true;
 }
 
@@ -1061,12 +1085,14 @@ pwaLikelihood<complexT>::readWaveList(const std::vector<rpwa::waveDescription>& 
 	}
 	_nmbWaves        = _nmbWavesRefl[0] + _nmbWavesRefl[1];
 	_nmbWavesReflMax = max(_nmbWavesRefl[0], _nmbWavesRefl[1]);
-	_waveNames.resize      (extents[2][_nmbWavesReflMax]);
-	_waveThresholds.resize (extents[2][_nmbWavesReflMax]);
+	_waveNames.resize       (extents[2][_nmbWavesReflMax]);
+	_waveThresholds.resize  (extents[2][_nmbWavesReflMax]);
+	_waveNameAmpAdded.resize(extents[2][_nmbWavesReflMax]);
 	for (unsigned int iRefl = 0; iRefl < 2; ++iRefl)
 		for (unsigned int iWave = 0; iWave < _nmbWavesRefl[iRefl]; ++iWave) {
-			_waveNames      [iRefl][iWave] = waveNames     [iRefl][iWave];
-			_waveThresholds [iRefl][iWave] = waveThresholds[iRefl][iWave];
+			_waveNames       [iRefl][iWave] = waveNames     [iRefl][iWave];
+			_waveThresholds  [iRefl][iWave] = waveThresholds[iRefl][iWave];
+			_waveNameAmpAdded[iRefl][iWave] = false;
 			_waveParams.insert(std::pair<std::string, std::pair<unsigned int, unsigned int> >(waveNames[iRefl][iWave], std::pair<unsigned int, unsigned int>(iRefl, iWave)));
 		}
 	return true;
@@ -1173,8 +1199,17 @@ pwaLikelihood<complexT>::reorderIntegralMatrix(const ampIntegralMatrix& integral
 
 template<typename complexT>
 bool
-pwaLikelihood<complexT>::rescaleIntegrals()
+pwaLikelihood<complexT>::finishInit()
 {
+	for (unsigned int iRefl = 0; iRefl < 2; ++iRefl) {
+		for (unsigned int iWave = 0; iWave < _nmbWavesRefl[iRefl]; ++iWave) {
+			if (not _waveNameAmpAdded[iRefl][iWave]) {
+				printErr << "not all expected amplitudes were added to the likelihood ('" << _waveNames[iRefl][iWave] << "'). Aborting..." << endl;
+				return false;
+			}
+		}
+	}
+
 	// save phase space integrals
 	_phaseSpaceIntegral.resize(extents[2][_nmbWavesReflMax]);
 	for (unsigned int iRefl = 0; iRefl < 2; ++iRefl)
@@ -1224,6 +1259,7 @@ pwaLikelihood<complexT>::rescaleIntegrals()
 						}
 		}
 	}  // _useNormalizedAmps
+	_initFinished = true;
 	return true;
 }
 
