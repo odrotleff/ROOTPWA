@@ -4,7 +4,7 @@
 #include"calcTprime.h"
 namespace rpwa {
 	namespace py {
-		void exportCalcMultipleAmplitudes();
+		void exportCalcTprime();
 	}
 }
 
