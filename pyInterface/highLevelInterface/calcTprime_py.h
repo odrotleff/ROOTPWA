@@ -1,11 +1,11 @@
-#ifndef DIE_METHODE
-#define DIE_METHODE
+#ifndef CALCTPRIME_PY
+#define CALCTPRIME_PY
 #include<boost/python.hpp>
 #include"calcTprime.h"
 namespace rpwa {
 	namespace py {
-		void exportCalcMultipleAmplitudes();
+		void exportCalcTprime();
 	}
 }
 
-#endif//DIE_METHODE
+#endif//CALCTPRIME_PY
