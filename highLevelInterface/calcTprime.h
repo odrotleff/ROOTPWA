@@ -15,15 +15,15 @@
 #include"ampIntegralMatrix.h"
 namespace rpwa {
 	namespace hli {
-		std::vector<double> getTprimesFromTree(					const eventMetadata* 			eventMeta,
-											isobarDecayTopologyPtr			topology,
-											const long int				maxNmbEvents = -1,
-											const std::string& 			treePerfStatOutFileName = "",
-											const long int 				treeCacheSize = 25000000);
+		std::vector<double> getTprimesFromTree(                                 const eventMetadata*                    eventMeta,
+		                                                                        isobarDecayTopologyPtr                  topology,
+		                                                                        const long int                          maxNmbEvents = -1,
+		                                                                        const std::string&                      treePerfStatOutFileName = "",
+		                                                                        const long int                          treeCacheSize = 25000000);
 
 
-		std::vector<double> getTprimesFromFiles(				const std::string			fileName,
-											const std::string			keyFile,
-											const long int				maxNmbEvents);
+		std::vector<double> getTprimesFromFiles(                                const std::string                       fileName,
+		                                                                        const std::string                       keyFile,
+		                                                                        const long int                          maxNmbEvents);
 	};
 };

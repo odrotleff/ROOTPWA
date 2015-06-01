@@ -3,9 +3,9 @@
 #include"calcTprime.h"
 
 
-std::vector<double> rpwa::hli::getTprimesFromFiles(					const std::string			fileName,
-											const std::string			keyFile,
-											const long int				maxNmbEvents){
+std::vector<double> rpwa::hli::getTprimesFromFiles(                                     const std::string                       fileName,
+                                                                                        const std::string                       keyFile,
+                                                                                        const long int                          maxNmbEvents){
 
 	waveDescription description = waveDescription();
 	rpwa::isobarDecayTopologyPtr topology;
@@ -17,11 +17,11 @@ std::vector<double> rpwa::hli::getTprimesFromFiles(					const std::string			file
 };
 
 
-std::vector<double> rpwa::hli::getTprimesFromTree(					const rpwa::eventMetadata* 		eventMeta,
-											rpwa::isobarDecayTopologyPtr		topology,
-											const long int				maxNmbEvents,
-											const std::string& 			treePerfStatOutFileName,
-											const long int 				treeCacheSize){
+std::vector<double> rpwa::hli::getTprimesFromTree(                                      const rpwa::eventMetadata*              eventMeta,
+                                                                                        rpwa::isobarDecayTopologyPtr            topology,
+                                                                                        const long int                          maxNmbEvents,
+                                                                                        const std::string&                      treePerfStatOutFileName,
+                                                                                        const long int                          treeCacheSize){
 
 	if (not topology){
 		printWarn<<"no topology given, abort."<<std::endl;

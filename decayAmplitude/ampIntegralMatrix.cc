@@ -290,7 +290,6 @@ bool ampIntegralMatrix::addEventAmplitudes(const std::vector<std::complex<double
 	};
 	for(size_t iWave = 0;iWave<_nmbWaves;++iWave){
 		for(size_t jWave = 0; jWave<_nmbWaves;++jWave){
-//			std::cout<<"Addieren Sie, addieren Sie!!! "<<amplitudes[iWave]*std::conj(amplitudes[jWave])<<std::endl;
 			_integrals[iWave][jWave]+= amplitudes[iWave]*std::conj(amplitudes[jWave]);
 		};
 	};

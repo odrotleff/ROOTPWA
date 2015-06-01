@@ -341,7 +341,5 @@ double diffractiveDissVertex::getTprime() const{
 	const TLorentzVector lvBeam = TLorentzVector(beam()->lzVec());
 	const TLorentzVector lvTarget = TLorentzVector(target()->lzVec()); 
 	const TLorentzVector lvOut = TLorentzVector(XParticle()->lzVec());
-
-	
 	return tPrime(lvBeam,lvTarget,lvOut);
 };

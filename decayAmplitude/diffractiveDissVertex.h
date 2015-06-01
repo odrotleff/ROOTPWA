@@ -88,7 +88,7 @@ namespace rpwa {
 		inline const particlePtr& target() const { return inParticles ()[1]; }  ///< returns target particle
 		inline const particlePtr& recoil() const { return outParticles()[1]; }  ///< returns recoil particle
 
-		double	     getTprime          () const;
+		double getTprime () const;
 
 		virtual bool initKinematicsData(const TClonesArray& prodKinPartNames);  ///< initializes input data
 		virtual bool readKinematicsData(const TClonesArray& prodKinMomenta);    ///< reads input data

@@ -3,11 +3,11 @@
 #include"calcAmplitude.h"
 
 
-bool rpwa::hli::getIntegralsFromKeyFiles(			const std::string			integralName,
-								const std::string			outFileName,
-								const std::vector<std::string> 		&keyFiles, 
-								const std::vector<std::string> 		&eventFiles, 
-								const int 				maxNmbEvents){
+bool rpwa::hli::getIntegralsFromKeyFiles(                       const std::string                       integralName,
+                                                                const std::string                       outFileName,
+                                                                const std::vector<std::string>          &keyFiles, 
+                                                                const std::vector<std::string>          &eventFiles, 
+                                                                const int                               maxNmbEvents){
 
 	if (keyFiles.size()==0){
 		printWarn<<"no keyFiles given, abort"<<std::endl;
@@ -43,9 +43,9 @@ bool rpwa::hli::getIntegralsFromKeyFiles(			const std::string			integralName,
 
 
 
-std::vector<std::complex<double> > rpwa::hli::evaluateAmplitudes(	std::vector<rpwa::isobarAmplitudePtr> 	&amplitudes, 
-									TClonesArray	 			prodKinematics, 
-									TClonesArray 				decayKinematics){
+std::vector<std::complex<double> > rpwa::hli::evaluateAmplitudes(       std::vector<rpwa::isobarAmplitudePtr>   &amplitudes, 
+                                                                        TClonesArray                            prodKinematics, 
+                                                                        TClonesArray                            decayKinematics){
 	std::vector<std::complex<double> > returnValue(amplitudes.size());
 	for (size_t amp=0;amp<amplitudes.size();++amp){
 		if (not amplitudes[amp]->decayTopology()->readKinematicsData(prodKinematics,decayKinematics)){
@@ -58,9 +58,9 @@ std::vector<std::complex<double> > rpwa::hli::evaluateAmplitudes(	std::vector<rp
 	return returnValue;
 };
 
-bool rpwa::hli::initAmplitudesKinematics(	std::vector<rpwa::isobarAmplitudePtr> 	&amplitudes, 
-						std::vector<std::string> 		prodNames, 
-						std::vector<std::string> 		decayNames){
+bool rpwa::hli::initAmplitudesKinematics(       std::vector<rpwa::isobarAmplitudePtr>   &amplitudes, 
+                                                std::vector<std::string>                prodNames, 
+                                                std::vector<std::string>                decayNames){
 	bool returnValue = true;
 	for(size_t amp=0;amp<amplitudes.size();++amp){
 		if(not amplitudes[amp]->decayTopology()->initKinematicsData(prodNames,decayNames)){
@@ -86,39 +86,28 @@ std::vector<rpwa::isobarAmplitudePtr> rpwa::hli::getAmplitudesFromKeyFiles(const
 	return returnValue;
 };
 
-std::vector<std::string> rpwa::hli::waveNamesFromKeyFiles(	const std::vector<std::string> 	&keyFiles, 
-								bool 				newConvention){
+std::vector<std::string> rpwa::hli::waveNamesFromKeyFiles(      const std::vector<std::string>  &keyFiles, 
+                                                                bool                            newConvention){
 	size_t nWaves = keyFiles.size();
 	std::vector<std::string> names(nWaves);
 	waveDescription description = waveDescription();
 	rpwa::isobarDecayTopologyPtr topology;
 	for (size_t wave=0;wave<nWaves;++wave){
-		description.parseKeyFile(keyFiles[wave]);	
+		description.parseKeyFile(keyFiles[wave]);
 		description.constructDecayTopology(topology);
 		names[wave] = description.waveNameFromTopology(*topology,newConvention);
 	};
 	return names;
 };
 
-template<typename T>
-void printVector(std::vector<T> vec){
-	
-	std::cout<<"[";
-	for (size_t i=0;i<vec.size();++i){
-		std::cout<<vec[i];
-	};
-	std::cout<<"]"<<std::endl;
-};
-
-bool rpwa::hli::calcTbinnedIntegralsFromEventTree(	const rpwa::eventMetadata* 			eventMeta, 
-							std::vector<rpwa::isobarAmplitudePtr> 		&amplitudes, 
-							std::vector<rpwa::ampIntegralMatrix>		&matrix,
-							std::vector<double>				tBinning,
-							const long int 					maxNmbEvents,
-							const long int					startEvent,
-							const std::string& 				treePerfStatOutFileName,
-							const long int 					treeCacheSize){
-	
+bool rpwa::hli::calcTbinnedIntegralsFromEventTree(      const rpwa::eventMetadata*                      eventMeta, 
+                                                        std::vector<rpwa::isobarAmplitudePtr>           &amplitudes, 
+                                                        std::vector<rpwa::ampIntegralMatrix>            &matrix,
+                                                        std::vector<double>                             tBinning,
+                                                        const long int                                  maxNmbEvents,
+                                                        const long int                                  startEvent,
+                                                        const std::string&                              treePerfStatOutFileName,
+                                                        const long int                                  treeCacheSize){
 
 	bool tBinned = true;
 	if (tBinning.size() ==0){
@@ -163,7 +152,6 @@ bool rpwa::hli::calcTbinnedIntegralsFromEventTree(	const rpwa::eventMetadata* 		
 	if(treePerfStatOutFileName != "") {
 		treePerfStats = new TTreePerfStats("ioPerf", tree);
 	};
-
 	// loop over events
 	if(not initAmplitudesKinematics(amplitudes,(*eventMeta).productionKinematicsParticleNames(), (*eventMeta).decayKinematicsParticleNames())) {
 		printWarn << "problems initializing input data. cannot read input data." << std::endl;
@@ -184,8 +172,6 @@ bool rpwa::hli::calcTbinnedIntegralsFromEventTree(	const rpwa::eventMetadata* 		
 		if (tBinned){
 
 		};
-			
-
 		if(not prodKinMomenta or not decayKinMomenta) {
 			printWarn << "at least one of the input data arrays is a null pointer: "
 			          << "        production kinematics: " << "momenta = " << prodKinMomenta  << std::endl
@@ -203,6 +189,5 @@ bool rpwa::hli::calcTbinnedIntegralsFromEventTree(	const rpwa::eventMetadata* 		
 		treePerfStats->SaveAs(treePerfStatOutFileName.c_str());
 		delete treePerfStats;
 	};
-
 	return true;
 };
