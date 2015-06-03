@@ -2,6 +2,8 @@
 #include<string>
 #include<vector>
 #include<complex>
+#include<map>
+#include<utility>
 
 #include"TFile.h"
 #include"TTree.h"
@@ -21,17 +23,25 @@ namespace rpwa {
 		                                                                        const std::vector<std::string>          &eventFiles, 
 		                                                                        const int                               maxNmbEvents = -1);
 
+		bool getTbinnedIntegralsFromKeyFiles(                                   const std::string                       integralNameBase,
+		                                                                        const std::string                       outFileName,
+		                                                                        const std::vector<std::string>          &keyFiles,
+		                                                                        const std::vector<std::string>          &eventFiles,
+		                                                                        const std::vector<double>               &tBinning,
+		                                                                        const int                               maxNmbEvents);
+
 		std::vector<rpwa::isobarAmplitudePtr> getAmplitudesFromKeyFiles(const std::vector<std::string> &keyFiles);
 		std::vector<std::string> waveNamesFromKeyFiles(const std::vector<std::string> &keyFiles,bool newConvention = false);
 
 		std::vector<std::complex<double> > evaluateAmplitudes(std::vector<rpwa::isobarAmplitudePtr> &amplitudes, TClonesArray prodKinematics, TClonesArray decayKinematics);
 
 		bool initAmplitudesKinematics(std::vector<rpwa::isobarAmplitudePtr> &amplitudes, std::vector<std::string> prodNames, std::vector<std::string> decayNames);
+		bool checkBinnings(std::vector<std::map<std::string,std::pair<double, double> > > binnings);
 
-		bool calcTbinnedIntegralsFromEventTree( const eventMetadata*                            eventMeta, 
+		bool calcBinnedIntegralsFromEventTree(  const eventMetadata*                            eventMeta, 
 		                                        std::vector<isobarAmplitudePtr>                 &amplitudes, 
 		                                        std::vector<ampIntegralMatrix>                  &matrix,
-		                                        std::vector<double>                             tBinning                                = std::vector<double>(0),
+		                                        std::vector<std::map<std::string,std::pair<double,double> > >binning                    = std::vector<std::map<std::string,std::pair<double,double> > >(0),
 		                                        const long int                                  maxNmbEvents                            = -1, 
 		                                        const long int                                  startEvent                              =  0,
 		                                        const std::string&                              treePerfStatOutFileName                 = "", 
