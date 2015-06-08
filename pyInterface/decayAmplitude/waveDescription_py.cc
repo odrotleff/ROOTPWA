@@ -97,6 +97,8 @@ void rpwa::py::exportWaveDescription() {
 
 		.def("Write", &waveDescription_Write, bp::arg("name")=0)
 
-		.add_static_property("debugWaveDescription", &rpwa::waveDescription::debug, &rpwa::waveDescription::setDebug);
+		.add_static_property("debugWaveDescription", &rpwa::waveDescription::debug, &rpwa::waveDescription::setDebug)
+
+		.def("nmbAmplitudes", &rpwa::waveDescription::nmbAmplitudes);
 
 }

@@ -83,8 +83,10 @@ namespace rpwa {
 		std::ostream& printKeyFileContent(std::ostream&      out,
 		                                  const std::string& keyFileContent = "") const;  ///< prints key file content string with line numbers
 		bool constructDecayTopology(isobarDecayTopologyPtr& topo,
-		                            const bool              fromTemplate = false) const;  ///< construct isobar decay topology from keyfile
-		bool constructAmplitude(isobarAmplitudePtr& amplitude) const;  ///< construct isobar decay amplitude from keyfile
+		                            const bool              fromTemplate = false,
+		                            unsigned int            nBin = 0) const;  ///< construct isobar decay topology from keyfile
+		bool constructAmplitude(isobarAmplitudePtr& amplitude,
+				                unsigned int        nBin =0) const;  ///< construct isobar decay amplitude from keyfile
 		bool constructAmplitude(isobarAmplitudePtr&           amplitude,
 		                        const isobarDecayTopologyPtr& topo) const;  ///< construct isobar amplitude using existing decay topology
 
@@ -108,7 +110,8 @@ namespace rpwa {
 		static bool debug() { return _debug; }                             ///< returns debug flag
 		static void setDebug(const bool debug = true) { _debug = debug; }  ///< sets debug flag
 
-
+		unsigned int nmbAmplitudes() const; ///< returns number of amplitudes described by the key file
+		std::pair<double,double> binBorders(unsigned int nBin) const;
 	private:
 
 		bool readKeyFileIntoLocalCopy(const std::string& keyFileName);  ///< reads key file content into _keyFileLocalCopy string
@@ -126,11 +129,12 @@ namespace rpwa {
 		                              particlePtr&              particle,
 		                              const bool                requirePartInTable = true);  ///< creates particle using name in particle key
 		static massDependencePtr mapMassDependenceType(const std::string& massDepType);  ///< creates mass dependence functor of specified type
-		static bool constructDecayVertex(const libconfig::Setting&          parentKey,
+		bool constructDecayVertex(       const libconfig::Setting&          parentKey,
 		                                 const particlePtr&                 parentParticle,
 		                                 std::vector<isobarDecayVertexPtr>& decayVertices,
 		                                 std::vector<particlePtr>&          fsParticles,
-		                                 const bool                         fromTemplate = false);  ///< recursively traverses decay chain and creates decay vertices and final state particles
+		                                 const bool                         fromTemplate = false,
+		                                 unsigned int                       nBin = 0) const;  ///< recursively traverses decay chain and creates decay vertices and final state particles
 		static isobarAmplitudePtr mapAmplitudeType(const std::string&            formalismType,
 		                                           const isobarDecayTopologyPtr& topo);  ///< creates amplitude for specified formalism
 

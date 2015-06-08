@@ -67,8 +67,8 @@ bool waveDescription::_debug = false;
 
 
 map<string,string> waveDescription::isobars = map_list_of
-	("pi+",         "\\pi^+")
-	("pi-",         "\\pi^-")
+  ("pi+",         "\\pi^+")
+  ("pi-",         "\\pi^-")
   ("pi+-",        "\\pi^\\pm")
   ("pi-+",        "\\pi^\\mp")
   ("sigma0",      "\\sigma")
@@ -233,7 +233,8 @@ waveDescription::printKeyFileContent(ostream&      out,
 
 bool
 waveDescription::constructDecayTopology(isobarDecayTopologyPtr& topo,
-                                        const bool              fromTemplate) const
+                                        const bool              fromTemplate,
+                                        unsigned int            nBin) const
 {
 	if (not _key or not _keyFileParsed) {
 		printWarn << "parsing was not successful. cannot construct decay topology." << endl;
@@ -291,7 +292,7 @@ waveDescription::constructDecayTopology(isobarDecayTopologyPtr& topo,
 	// traverse decay chain and create final state particles and isobar decay vertices
 	vector<isobarDecayVertexPtr> decayVertices;
 	vector<particlePtr>          fsParticles;
-	if (not constructDecayVertex(*XDecayKey, X, decayVertices, fsParticles, fromTemplate)) {
+	if (not constructDecayVertex(*XDecayKey, X, decayVertices, fsParticles, fromTemplate, nBin)) {
 		printWarn << "problems constructing decay chain. cannot construct decay topology." << endl;
 		return false;
 	}
@@ -308,10 +309,11 @@ waveDescription::constructDecayTopology(isobarDecayTopologyPtr& topo,
 
 
 bool
-waveDescription::constructAmplitude(isobarAmplitudePtr& amplitude) const
+waveDescription::constructAmplitude(isobarAmplitudePtr& amplitude,
+		                            unsigned int nBin) const
 {
 	isobarDecayTopologyPtr topo;
-	if (not constructDecayTopology(topo)) {
+	if (not constructDecayTopology(topo, false, nBin)) {
 		printWarn << "problems constructing decay topology. cannot construct decay amplitude." << endl;
 		return false;
 	}
@@ -676,13 +678,13 @@ waveDescription::mapMassDependenceType(const string& massDepType)
 	return massDep;
 }
 
-
 bool
 waveDescription::constructDecayVertex(const Setting&                parentKey,
                                       const particlePtr&            parentParticle,
                                       vector<isobarDecayVertexPtr>& decayVertices,
                                       vector<particlePtr>&          fsParticles,
-                                      const bool                    fromTemplate)
+                                      const bool                    fromTemplate,
+                                      unsigned int                  nBin) const
 {
 	if (_debug)
 		printDebug << "reading decay vertex information from '" << parentKey.getPath() << "':" << endl;
@@ -710,7 +712,7 @@ waveDescription::constructDecayVertex(const Setting&                parentKey,
 			else
 				success = false;
 			success &= constructDecayVertex((*isobarKeys)[i], isobarDaughters.back(),
-			                                decayVertices, fsParticles, fromTemplate);
+			                                decayVertices, fsParticles, fromTemplate, nBin);
 		}
 
 	const unsigned int nmbDaughters = fsDaughters.size() + isobarDaughters.size();
@@ -737,10 +739,19 @@ waveDescription::constructDecayVertex(const Setting&                parentKey,
 		const Setting* massDepKey  = findLibConfigGroup(parentKey, "massDep", false);
 		if (massDepKey)
 			massDepKey->lookupValue("name", massDepType);
-		massDep = mapMassDependenceType(massDepType);
+		if (massDepType != "de-isobar"){
+			massDep = mapMassDependenceType(massDepType);
+		}else{
+			std::pair<double,double> borders = binBorders(nBin);
+			if (borders.first > borders.second){
+				printErr<<"bin #"<<nBin<<" upper bin border < lower bin border"<<std::endl;
+				return false;
+			}
+			massDep = createSteplikeMassDependence(borders.first,borders.second);
+		}
 	}
 
-	// if there is 1 final state particle and 1 isobar put them in the
+	// if there is 1 final state particle and 1 isobar put them in theq
 	// same order as in the key file
 	vector<particlePtr> daughters(2, particlePtr());
 	if ((fsDaughters.size() == 1) and (isobarDaughters.size() == 1)) {
@@ -1037,4 +1048,48 @@ waveDescription::writeKeyFile(FILE&                  outStream,
 		return false;
 	}
 	return true;
+}
+
+unsigned int
+waveDescription::nmbAmplitudes() const
+{
+	if (!_keyFileParsed){
+		printWarn<<"no keyfile parsed. assume one amplitude"<<std::endl;
+				return 1;
+	}
+	const Setting& setting = _key->getRoot();
+	const Setting* deisobar  = findLibConfigGroup(setting, "de-isobar", false);
+	if (not deisobar){
+		return 1;
+	}
+	const Setting* binning = findLibConfigList(*deisobar, "binning", true);
+	unsigned int nBins = binning->getLength();
+	if (nBins <2 ){
+		printErr<<"number of bin borders below 2"<<std::endl;
+		throw;
+	}
+	return nBins-1;
+}
+
+std::pair<double,double>
+waveDescription::binBorders( unsigned int nBin) const
+{
+	unsigned int nBins = nmbAmplitudes()-1;
+	if (nBins ==1){
+		printErr<<"no de-isobarred wave"<<std::endl;
+		throw;
+	}
+
+	if (nBin > nBins){
+		printErr<<"bin index too large: "<<nBin<<" > "<<nBins<<std::endl;
+		throw;
+	}
+	if (!_keyFileParsed){
+		printErr<<"no keyFile parsed"<<std::endl;
+	}
+	const Setting& setting = _key->getRoot();
+	const Setting* deisobar  = findLibConfigGroup(setting, "de-isobar", false);
+	const Setting* binning = findLibConfigList(*deisobar, "binning", true);
+
+	return std::pair<double,double>((*binning)[nBin],(*binning)[nBin+1]);
 }
