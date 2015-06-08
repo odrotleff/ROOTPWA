@@ -188,6 +188,7 @@ eventMetadata* rpwa::eventMetadata::merge(const vector<const eventMetadata*>& in
 		}
 		if(first) {
 			first = false;
+			mergee->setEventsType(metadata->eventsType());
 			if((mergee->productionKinematicsParticleNames().empty()) and
 			   (mergee->decayKinematicsParticleNames().empty()))
 			{
@@ -202,9 +203,13 @@ eventMetadata* rpwa::eventMetadata::merge(const vector<const eventMetadata*>& in
 				mergedBinningMap = metadata->binningMap();
 			}
 			if(mergee->additionalSavedVariableLables().empty()) {
-				mergee->setAdditionalSavedVariableLables(metadata->additionalSavedVariableLables());
-				additionalSavedVariables.resize(mergee->additionalSavedVariableLables().size(), 0.);
+				const vector<string>& additionalVariableLabels = metadata->additionalSavedVariableLables();
+				mergee->setAdditionalSavedVariableLables(additionalVariableLabels);
+				additionalSavedVariables.resize(additionalVariableLabels.size(), 0.);
 				for(unsigned int i = 0; i < additionalSavedVariables.size(); ++i) {
+					stringstream strStr;
+					strStr << additionalVariableLabels[i] << "/D";
+					mergee->_eventTree->Branch(additionalVariableLabels[i].c_str(), &additionalSavedVariables[i], strStr.str().c_str());
 					if(inputTree->SetBranchAddress(mergee->additionalSavedVariableLables()[i].c_str(), &additionalSavedVariables[i]) < 0)
 					{
 						printWarn << "could not set address for branch '" << mergee->additionalSavedVariableLables()[i] << "'." << endl;
@@ -215,6 +220,12 @@ eventMetadata* rpwa::eventMetadata::merge(const vector<const eventMetadata*>& in
 			}
 		}
 		mergee->appendToUserString(metadata->userString());
+		if(mergee->eventsType() != metadata->eventsType()) {
+			printWarn << "events types differ." << endl;
+			delete mergee->_eventTree;
+			delete mergee;
+			return 0;
+		}
 		if(mergee->productionKinematicsParticleNames() != metadata->productionKinematicsParticleNames()) {
 			printWarn << "particle names of production kinematics differ." << endl;
 			delete mergee->_eventTree;
