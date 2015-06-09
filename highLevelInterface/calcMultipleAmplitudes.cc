@@ -70,7 +70,9 @@ bool rpwa::hli::getTbinnedIntegralsFromKeyFiles(                const std::strin
 	std::vector<ampIntegralMatrix> integralMatrix = std::vector<ampIntegralMatrix>(nTbin,ampIntegralMatrix());
 	std::vector<rpwa::isobarAmplitudePtr> amplitudes = getAmplitudesFromKeyFiles(keyFiles);
 	std::vector<std::string> names = waveNamesFromKeyFiles(keyFiles, true);
-	integralMatrix[0].initialize(names);
+	for (size_t iTbin = 0; iTbin < nTbin; iTbin++) {
+		integralMatrix[iTbin].initialize(names);
+	}
 	if (eventFiles.size()==0){
 		printWarn<<"no eventFiles given, abort"<<std::endl;
 		return false;
