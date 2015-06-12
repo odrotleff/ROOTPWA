@@ -175,6 +175,30 @@ namespace {
 		return bp::list(self.CorrectParamSigns(par.data()));
 	}
 
+
+	bp::tuple
+	pwaLikelihood_buildProdAmpArrays(rpwa::pwaLikelihood<std::complex<double> >& self,
+	                                 const bp::list&                             pyInPar,
+	                                 const bool                                  withFlat = false)
+	{
+		const unsigned int nmbPar = bp::len(pyInPar);
+		std::vector<double> inPar(nmbPar, 0);
+		for(unsigned int i = 0; i < nmbPar; ++i) {
+			inPar[i] = bp::extract<double>(pyInPar[i]);
+		}
+		std::vector<std::complex<double> > prodAmps;
+		std::vector<std::pair<int, int> >  parIndices;
+		std::vector<std::string>           prodAmpNames;
+		self.buildProdAmpArrays(inPar.data(), prodAmps, parIndices, prodAmpNames, withFlat);
+		bp::list pyParIndices;
+		for (unsigned int i = 0; i < parIndices.size(); ++i) {  // convert vector<pair<int,int> > to python type
+			std::pair<int, int> curPair = parIndices[i];
+			bp::tuple curTuple = bp::make_tuple(curPair.first, curPair.second);
+			pyParIndices.append(curTuple);
+		}
+		return bp::make_tuple(bp::list(prodAmps), pyParIndices, bp::list(prodAmpNames));
+	}
+
 }
 
 
@@ -226,6 +250,12 @@ void rpwa::py::exportPwaLikelihood() {
 			, (bp::arg("flag") = true)
 		)
 		.staticmethod("setQuiet")
+		.def(
+			"buildProdAmpArrays"
+			, ::pwaLikelihood_buildProdAmpArrays
+			, (bp::arg("inPar"),
+			   bp::arg("withFlat") = false)
+		)
 		.def(bp::self_ns::str(bp::self))
 		;
 
