@@ -12,12 +12,10 @@ def readWaveList(waveListFileName, keyFiles):
 	          + "'" + waveListFileName + "'.")
 	with open(waveListFileName, 'r') as waveListFile:
 #	if (not waveListFile) {
-#		printErr << "cannot open file '" << waveListFileName << "'. aborting." << endl;
+#		printErr << "cannot open file '" << waveListFileName << "'. Aborting..." << endl;
 #		throw;
 #	}
-		waveNames = []
-		waveDescriptions = []
-		waveThresholds = []
+		waveDescThres = []
 		lineNmb = 0
 		for line in waveListFile:
 			if (line[0] == '#'):  # comments start with #
@@ -26,15 +24,13 @@ def readWaveList(waveListFileName, keyFiles):
 			lineArray = line.split(" ")
 			if(len(lineArray) >= 1 and len(lineArray) <= 2):
 				waveName = lineArray[0]
-				waveNames.append(waveName)
 				if(len(lineArray) == 1):
 					threshold = 0
 				else:
 					threshold = lineArray[1]
 				waveDesc = pyRootPwa.core.waveDescription()
 				waveDesc.parseKeyFile(keyFiles[waveName])
-				waveDescriptions.append(waveDesc)
-				waveThresholds.append(float(threshold))
+				waveDescThres.append( (waveName, waveDesc, float(threshold)) )
 			else:
 				pyRootPwa.utils.printWarn("cannot parse line '" + line + "' in wave list file "
 				          + "'" + waveListFileName + "'.")
@@ -43,7 +39,7 @@ def readWaveList(waveListFileName, keyFiles):
 #  				           + "threshold = " + threshold + " MeV/c^2")
 			lineNmb += 1
 	pyRootPwa.utils.printInfo("read " + str(lineNmb) + " lines from wave list file " + "'" + waveListFileName + "'")
-	return (waveNames, waveDescriptions, waveThresholds)
+	return waveDescThres
 
 def getStartValues(likelihood, seed):
 	nmbPars = likelihood.nmbPars()
@@ -64,21 +60,19 @@ def getStartValues(likelihood, seed):
 			sys.exit(1)
 	return startValues
 
-def initLikelihood(fileManager, binningMap, binID, waveListFileName, accEventsOverride, rank, cauchyPriors, verbose):
-	massBinCenter = (binningMap['mass'][1] + binningMap['mass'][0]) / 2.
-	(waveNames, waveDescriptions, waveThresholds) = readWaveList(waveListFileName, fileManager.getKeyFiles())
+def initLikelihood(fileManager, massBinCenter, binID, waveListFileName, accEventsOverride, rank, cauchyPriors, verbose):
+	waveDescThres = readWaveList(waveListFileName, fileManager.getKeyFiles())
 	likelihood = pyRootPwa.core.pwaLikelihood()
 	likelihood.useNormalizedAmps(True)
 	if cauchyPriors:
 		likelihood.setPriorType(pyRootPwa.core.HALF_CAUCHY)
 	if not verbose:
 		likelihood.setQuiet()
-  	if (not likelihood.init(waveDescriptions,
-  	                        waveThresholds,
-  	                        rank,
-  	                        massBinCenter)):
- 		printErr("could not initialize likelihood. Aborting...")
- 		sys.exit(1)
+	if (not likelihood.init(waveDescThres,
+	                        rank,
+	                        massBinCenter)):
+		printErr("could not initialize likelihood. Aborting...")
+		return False
 
 	normIntegralFileName  = fileManager.getIntegralFilePath(binID, pyRootPwa.core.eventMetadata.GENERATED)
 	accIntegralFileName = fileManager.getIntegralFilePath(binID, pyRootPwa.core.eventMetadata.ACCEPTED)
@@ -101,22 +95,20 @@ def initLikelihood(fileManager, binningMap, binID, waveListFileName, accEventsOv
 		sys.exit(1)
 	accIntFile.Close()
 
-	for waveName in waveNames:
+	for wave in waveDescThres:
+		waveName = wave[0]
 		ampFileName = ampFileList[waveName]
 		ampFile = ROOT.TFile.Open(ampFileName, "READ")
 		if not ampFile:
 			pyRootPwa.utils.printErr("could not open amplitude file '" + ampFileName + "'.")
-		meta = ampFile.Get(waveName + ".meta")
+			return False
+		meta = pyRootPwa.core.amplitudeMetadata.readAmplitudeFile(ampFile, waveName)
 		if not meta:
 			pyRootPwa.utils.printErr("could not get metadata for waveName '" + waveName + "'.")
-			sys.exit(1)
-		tree = ampFile.Get(waveName + ".amp")
-		if not tree:
-			pyRootPwa.utils.printErr("could not get amplitude tree for waveName '" + waveName + "'.")
-			sys.exit(1)
-		if (not likelihood.addAmplitude(tree, meta)):
+			return False
+		if (not likelihood.addAmplitude(meta)):
 			pyRootPwa.utils.printErr("could not add amplitude '" + waveName + "'. Aborting...")
-			sys.exit(1)
+			return False
 	if (not likelihood.finishInit()):
 		pyRootPwa.utils.printErr("could not finish initialization of likelihood. Aborting...")
 		sys.exit(1)
@@ -153,6 +145,12 @@ if __name__ == "__main__":
 
 	pyRootPwa.utils.stdoutisatty = sys.stdout.isatty()
 	pyRootPwa.utils.stderrisatty = sys.stderr.isatty()
+
+	printErr  = pyRootPwa.utils.printErr
+	printWarn = pyRootPwa.utils.printWarn
+	printSucc = pyRootPwa.utils.printSucc
+	printInfo = pyRootPwa.utils.printInfo
+	printDebug = pyRootPwa.utils.printDebug
 	ROOT = pyRootPwa.ROOT
 
 	defaultStartValue = 0.01
@@ -166,12 +164,13 @@ if __name__ == "__main__":
 		printErr("loading the file manager failed. Aborting...")
 		sys.exit(1)
 
-	ampFileList = fileManager.getAmpFilePaths(args.binID, pyRootPwa.core.eventMetadata.REAL)
+	ampFileList = fileManager.getAmplitudeFilePaths(args.binID, pyRootPwa.core.eventMetadata.REAL)
 	if not ampFileList:
 		printErr("could not retrieve valid amplitude file list. Aborting...")
 		sys.exit(1)
 	binningMap = fileManager.getBinFromID(args.binID)
-	likelihood = initLikelihood(fileManager, binningMap, args.binID, args.waveListFileName, args.accEventsOverride, args.rank, args.cauchyPriors, args.verbose)
+	massBinCenter = (binningMap['mass'][1] + binningMap['mass'][0]) / 2.
+	likelihood = initLikelihood(fileManager, massBinCenter, args.binID, args.waveListFileName, args.accEventsOverride, args.rank, args.cauchyPriors, args.verbose)
 
 	print "setting start values"
 	startValuesNoCauchy = getStartValues(likelihood, args.seed)
@@ -219,4 +218,37 @@ if __name__ == "__main__":
  		probval[0] = lnprob[j]
 		tree.Fill()
 	tree.Write()
+
+	(prodAmps, parIndices, prodAmpNames) = likelihood.buildProdAmpArrays([0. for _ in range(nmbPars)])
+	fitParCovMatrix                      = pyRootPwa.ROOT.TMatrixD(0, nmbPars, 0, nmbPars)
+# 	fitParCovIndices                     = [(likelihood.parName(p),  for p in range(nmbPars)]
+	print prodAmps
+	print prodAmpNames
+	print "likelihood:" + str(tups[0][0])
+# 	print fitParCovIndices
+	fitResult = pyRootPwa.core.fitResult()
+	fitResult.fill(likelihood.nmbEvents(),
+	               1,
+	               massBinCenter,
+	               tups[0][0],
+	               args.rank,
+	               prodAmps,
+	               prodAmpNames,
+	               fitParCovMatrix,
+	               parIndices,
+	               pyRootPwa.core.complexMatrix(0,0),
+	               pyRootPwa.core.complexMatrix(0,0),
+	               [],
+	               True,
+	               False)
+	valTreeName   = "pwa"
+	valBranchName = "fitResult_v2"
+	printInfo("file '" + args.outputFileName + "' is empty. "
+	        + "creating new tree '" + valTreeName + "' for PWA result.")
+	tree = pyRootPwa.ROOT.TTree(valTreeName, valTreeName)
+	if not fitResult.branch(tree, valBranchName):
+		printErr("failed to create new branch '" + valBranchName + "' in file '" + args.outputFileName + "'.")
+		sys.exit(1)
+	tree.Fill()
+	nmbBytes = tree.Write()
 	outputFile.Close()
