@@ -23,8 +23,7 @@ bool getIntegralsFromKeyFiles_py(       const std::string       integralName,
 		return rpwa::hli::getIntegralsFromKeyFiles(integralName, outFileName, vectorKeyFiles ,vectorEventFiles ,maxNmbEnvents);
 };
 
-bool getTbinnedIntegralsFromKeyFiles_py(const std::string       integralName,
-                                        const std::string       outFileName,
+bool getTbinnedIntegralsFromKeyFiles_py(const std::string       outFileName,
                                         const bp::object        keyFilesPy,
                                         const bp::object        eventFilesPy,
                                         const bp::object        tBinningPy,
@@ -46,7 +45,7 @@ bool getTbinnedIntegralsFromKeyFiles_py(const std::string       integralName,
 			bp::throw_error_already_set();
 		};
 
-		return rpwa::hli::getTbinnedIntegralsFromKeyFiles(integralName, outFileName, vectorKeyFiles ,vectorEventFiles, vectorTbinning ,maxNmbEnvents);
+		return rpwa::hli::getTbinnedIntegralsFromKeyFiles(outFileName, vectorKeyFiles ,vectorEventFiles, vectorTbinning ,maxNmbEnvents);
 };
 
 

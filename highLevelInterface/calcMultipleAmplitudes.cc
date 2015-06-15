@@ -42,12 +42,11 @@ bool rpwa::hli::getIntegralsFromKeyFiles(                       const std::strin
 	return true;
 };
 
-bool rpwa::hli::getTbinnedIntegralsFromKeyFiles(                const std::string                       integralNameBase,
-                                                                const std::string                       outFileName,
-                                                                const std::vector<std::string>          &keyFiles,
-                                                                const std::vector<std::string>          &eventFiles,
-                                                                const std::vector<double>               &tBinning,
-                                                                const int                               maxNmbEvents){
+bool rpwa::hli::getTbinnedIntegralsFromKeyFiles(const std::string                       outFileName,
+                                                const std::vector<std::string>          &keyFiles,
+                                                const std::vector<std::string>          &eventFiles,
+                                                const std::vector<double>               &tBinning,
+                                                const int                               maxNmbEvents){
 
 	if (tBinning.size() <2){
 		printWarn<<"no t' bins given"<<std::endl;
@@ -90,14 +89,13 @@ bool rpwa::hli::getTbinnedIntegralsFromKeyFiles(                const std::strin
 			return false;
 		};
 	};
-	TFile* outFile = new TFile(outFileName.c_str(), "RECREATE");
 	for (size_t b=0;b<nTbin;++b){
-		std::stringstream integralName;
-		integralName<<integralNameBase<<"_"<<tBinning[b]<<"_"<<tBinning[b+1];
-		integralMatrix[b].Write(integralName.str().c_str());
+		std::stringstream fileName;
+		fileName << outFileName << "_" << tBinning[b] << "_" << tBinning[b+1] << ".root";
+		TFile* outFile = new TFile(fileName.str().c_str(), "RECREATE");
+		integralMatrix[b].Write(rpwa::ampIntegralMatrix::integralObjectName.c_str());
+		outFile->Close();
 	};
-	outFile->Close();
-	integralMatrix[0].writeAscii("./integrals_new_method.txt");
 	return true;
 };   
 
