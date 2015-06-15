@@ -5,6 +5,7 @@
 
 #include<calcAmplitude.h>
 
+
 namespace rpwa {
 	namespace py {
 		void exportCalcAmplitude();

@@ -69,7 +69,8 @@ decayTopology::decayTopology()
 	  _decayVertices        (),
 	  _fsParticles          (),
 	  _fsDataPartIndexMap   (),
-	  _fsDataPartMomCache   ()
+	  _fsDataPartMomCache   (),
+	  _isDisVert		(false)
 {
 }
 
@@ -77,20 +78,23 @@ decayTopology::decayTopology()
 decayTopology::decayTopology(const productionVertexPtr&          productionVertex,
                              const vector<interactionVertexPtr>& decayVertices,
                              const vector<particlePtr>&          fsParticles,
-                             const bool                          performTopologyCheck)
+                             const bool                          performTopologyCheck):
+	  _isDisVert		(false)
 {
 	constructDecay(productionVertex, decayVertices, fsParticles, performTopologyCheck);
 }
 
 
 decayTopology::decayTopology(const decayTopology& topo)
-	: decayTopologyGraphType()
+	: decayTopologyGraphType(),
+	  _isDisVert		(false)
 {
 	*this = topo;
 }
 
 
-decayTopology::decayTopology(const decayTopologyGraphType& graph)
+decayTopology::decayTopology(const decayTopologyGraphType& graph):
+	  _isDisVert		(false)
 {
 	*this = graph;
 }
@@ -1060,3 +1064,18 @@ decayTopology::cloneEdge(const edgeDesc& ed)
 				_fsParticles[i] = newPart;
 	return newPart;
 }
+
+double decayTopology::getTprime(){
+	boost::shared_ptr<diffractiveDissVertex> diffDisVert;
+	if (_isDisVert){
+		diffDisVert = boost::static_pointer_cast<diffractiveDissVertex>(_prodVertex);
+	}else{
+		diffDisVert = boost::dynamic_pointer_cast<diffractiveDissVertex>(_prodVertex);
+		if (not diffDisVert){
+			printErr << "not a diffractiveDissVertex"<<std::endl;
+			return 0.;
+		};
+		_isDisVert = true;	
+	};
+	return diffDisVert->getTprime();
+};

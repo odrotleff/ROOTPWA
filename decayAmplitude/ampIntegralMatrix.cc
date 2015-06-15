@@ -43,7 +43,7 @@
 
 #include "reportingUtils.hpp"
 #include "fileUtils.hpp"
-#include "sumAccumulators.hpp"
+
 #include "amplitudeTreeLeaf.h"
 #include "ampIntegralMatrix.h"
 #include "amplitudeMetadata.h"
@@ -256,6 +256,47 @@ ampIntegralMatrix::element(const unsigned int waveIndexI,
 	return _integrals[waveIndexI][waveIndexJ] / ((double)_nmbEvents);
 }
 
+bool ampIntegralMatrix::initialize(const std::vector<std::string>& waveNames){
+
+	_nmbWaves = waveNames.size();
+	if (_nmbWaves==0){
+		printErr <<"no waves given"<<std::endl;
+		return false;
+	};
+	_waveNames = std::vector<std::string>();
+	for(size_t i=0; i < _nmbWaves;++i){
+		if (waveNames[i] == "") {
+			printErr << "can not add empty wave name.";
+			return false;
+		};
+		_waveNames.push_back(waveNames[i]);
+		_waveNameToIndexMap.insert(std::pair<std::string,unsigned int>(waveNames[i],i));
+	};
+	_nmbEvents = 0;
+	_integrals.resize(extents[_nmbWaves][_nmbWaves]);
+	for(size_t iWave = 0;iWave<_nmbWaves;++iWave){
+		for(size_t jWave = 0; jWave<_nmbWaves;++jWave){
+			_integrals[iWave][jWave] = std::complex<double>(0.,0.);
+		};
+	};
+	printSucc<<"ampIntegralMatrix initilized"<<std::endl;
+	return true;
+};
+
+bool ampIntegralMatrix::addEventAmplitudes(const std::vector<std::complex<double> > amplitudes){
+	if (not amplitudes.size() == _nmbWaves){
+		printErr<<"wrong number of amplitudes given: "<<amplitudes.size()<< " != "<<_nmbWaves<<std::endl;
+		return false;
+	};
+	for(size_t iWave = 0;iWave<_nmbWaves;++iWave){
+		for(size_t jWave = 0; jWave<_nmbWaves;++jWave){
+//			std::cout<<"Addieren Sie, addieren Sie!!! "<<amplitudes[iWave]*std::conj(amplitudes[jWave])<<std::endl;
+			_integrals[iWave][jWave]+= amplitudes[iWave]*std::conj(amplitudes[jWave]);
+		};
+	};
+	++_nmbEvents;
+	return true;
+};
 
 bool
 ampIntegralMatrix::integrate(const vector<const amplitudeMetadata*>& ampMetadata,
@@ -302,7 +343,7 @@ ampIntegralMatrix::integrate(const vector<const amplitudeMetadata*>& ampMetadata
 
 	// resize integral matrix
 	//_integrals.clear();
-	_integrals.resize(extents[_nmbWaves][_nmbWaves]);
+
 
 	// open importance sampling weight file
 	//!!! this should be provided as a friend tree for the amlitudes

@@ -114,6 +114,11 @@ set(SOURCES
 	${STORAGEFORMATS_SUBDIR}/eventFileWriter_py.cc
 	${STORAGEFORMATS_SUBDIR}/eventMetadata_py.cc
 	${UTILITIES_SUBDIR}/utils_py.cc
+	${UTILITIES_SUBDIR}/tPrime_py.cc
+	${HIGHLEVELINTERFACE_SUBDIR}/calcAmplitude_py.cc
+	${HIGHLEVELINTERFACE_SUBDIR}/pwaFit_py.cc
+	${HIGHLEVELINTERFACE_SUBDIR}/pwaNloptFit_py.cc
+	${HIGHLEVELINTERFACE_SUBDIR}/calcMultipleAmplitudes_py.cc
 	)
 if(USE_NLOPT)
 	LIST(APPEND SOURCES ${HIGHLEVELINTERFACE_SUBDIR}/pwaNloptFit_py.cc)

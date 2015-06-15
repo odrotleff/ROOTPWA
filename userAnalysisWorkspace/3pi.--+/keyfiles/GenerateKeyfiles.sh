@@ -18,7 +18,7 @@ fi
 # generate the keyfiles
 for TEMPLATE_KEY_FILE in ${TEMPLATE_KEY_FILES}
 do
-	generateWaveSet -p ${PARTICLE_DATA_TABLE} -o ${DESTINATION_DIR} -k ${TEMPLATE_KEY_FILE}
+	/nfs/hicran/project/compass/analysis/fkrinner/ROOTPWA/build/bin/generateWaveSet -p ${PARTICLE_DATA_TABLE} -o ${DESTINATION_DIR} -k ${TEMPLATE_KEY_FILE}
 done
 
 # post-process the keyfiles
