@@ -84,6 +84,7 @@ bool rpwa::hli::getTbinnedIntegralsFromKeyFiles(                const std::strin
 		if (nEvents >= maxNmbEvents and maxNmbEvents!=-1){
 			break;
 		};
+		printInfo << "calcBinnedIntegralsFromEventTree(" << eventFiles[nFile] << ")" << std::endl;
 		if (not calcBinnedIntegralsFromEventTree(actData, amplitudes, integralMatrix, binning , maxNmbEvents-nEvents, 0)){
 			printWarn<< "error in the integration, abort"<<std::endl;
 			return false;
@@ -154,7 +155,7 @@ std::vector<std::string> rpwa::hli::waveNamesFromKeyFiles(      const std::vecto
 	for (size_t wave=0;wave<nWaves;++wave){
 		description.parseKeyFile(keyFiles[wave]);
 		description.constructDecayTopology(topology);
-		names[wave] = description.waveNameFromTopology(*topology,newConvention);
+		names[wave] = description.waveNameFromTopology(*topology);
 	};
 	return names;
 };
