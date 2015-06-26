@@ -137,6 +137,7 @@ if __name__ == "__main__":
 	parser.add_argument("-s", type=int, metavar="#", dest="seed", default=0, help="random seed (default: 0)")
 	parser.add_argument("-w", type=str, metavar="path", dest="waveListFileName", default="", help="path to wavelist file (default: none)")
 	parser.add_argument("-N", type=int, metavar="#", dest="nmbSamples", default=10000, help="number of samples (default: 10,000)")
+	parser.add_argument("-R", type=float, metavar="#", dest="burnInRatio", default=1., help="ratio of burn-in samples to actual samples (default: 1)")
 	parser.add_argument("-r", type=int, metavar="#", dest="rank", default=1, help="rank of spin density matrix (default: 1)")
 	parser.add_argument("-A", type=int, metavar="#", dest="accEventsOverride", default=0, help="number of input events to normalize acceptance to (default: use number of events from acceptance integral file)")
  	parser.add_argument("-C", "--cauchyPriors", help="use half-Cauchy priors (default: false)", action="store_true")
@@ -180,7 +181,7 @@ if __name__ == "__main__":
 	startValuesNoCauchy = getStartValues(likelihood, args.seed)
 
 	M = args.nmbSamples
-	Madapt = 50000
+	Madapt = M * args.burnInRatio
 	delta = 0.2
 	print('Running HMC without cauchy priors with dual averaging and trajectory length %0.2f...' % delta)
 	samples, lnprob, epsilon = nuts6(FdFNoCauchy, M, Madapt, startValuesNoCauchy, delta, likelihood.anchorWaves())
