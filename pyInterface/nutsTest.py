@@ -153,6 +153,8 @@ if __name__ == "__main__":
 	printDebug = pyRootPwa.utils.printDebug
 	ROOT = pyRootPwa.ROOT
 
+	np.random.seed(args.seed)
+
 	defaultStartValue = 0.01
 	config = pyRootPwa.rootPwaConfig()
 	if not config.initialize(args.configFileName):
@@ -171,15 +173,17 @@ if __name__ == "__main__":
 	binningMap = fileManager.getBinFromID(args.binID)
 	massBinCenter = (binningMap['mass'][1] + binningMap['mass'][0]) / 2.
 	likelihood = initLikelihood(fileManager, massBinCenter, args.binID, args.waveListFileName, args.accEventsOverride, args.rank, args.cauchyPriors, args.verbose)
+	
+	print "Anchor waves: " + str(likelihood.anchorWaves())
 
 	print "setting start values"
 	startValuesNoCauchy = getStartValues(likelihood, args.seed)
 
 	M = args.nmbSamples
-	Madapt = 5000
+	Madapt = 50000
 	delta = 0.2
 	print('Running HMC without cauchy priors with dual averaging and trajectory length %0.2f...' % delta)
-	samples, lnprob, epsilon = nuts6(FdFNoCauchy, M, Madapt, startValuesNoCauchy, delta)
+	samples, lnprob, epsilon = nuts6(FdFNoCauchy, M, Madapt, startValuesNoCauchy, delta, likelihood.anchorWaves())
 	print('Done. Final epsilon = %f.' % epsilon)
 # 	print('Running HMC with cauchy priors with dual averaging and trajectory length %0.2f...' % delta)
 # 	samplesWithCauchy, lnprobWithCauchy, epsilonWithCauchy = nuts6(FdFWithCauchy, M, Madapt, startValuesWithCauchy, delta)

@@ -50,6 +50,8 @@
 
 #include "sumAccumulators.hpp"
 #include "ampIntegralMatrix.h"
+#include "amplitudeMetadata.h"
+#include "eventMetadata.h"
 
 
 class TString;
@@ -140,14 +142,15 @@ namespace rpwa {
 		/// flips the signs of the paramaters according to conventions (amplitudes of each anchor wave and the flat wave are real and positive)
 		std::vector<double> CorrectParamSigns(const double* par) const;
 
-		unsigned int             nmbEvents   ()                                    const { return _nmbEvents;               }  ///< returns number of events that enter in the likelihood
-		unsigned int             rank        ()                                    const { return _rank;                    }  ///< returns rank of spin density matrix
-		unsigned int             nmbWaves    (const int          reflectivity = 0) const;                                      ///< returns total number of waves (reflectivity == 0) or number or number of waves with positive/negative reflectivity; flat wave is not counted!
-		unsigned int             nmbPars     ()                                    const { return _nmbPars;                 }  ///< returns total number of parameters
-		unsigned int             nmbParsFixed()                                    const { return _nmbParsFixed;            }  ///< returns number of fixed parameters
-		std::string              parName     (const unsigned int parIndex)         const { return _parNames[parIndex];      }  ///< returns name of likelihood parameter at parIndex
-		double                   parThreshold(const unsigned int parIndex)         const { return _parThresholds[parIndex]; }  ///< returns threshold in GeV/c^2 above which likelihood parameter at parIndex becomes free
-		bool                     parFixed    (const unsigned int parIndex)         const { return _parFixed[parIndex];      }  ///< returns whether likelihood parameter at parIndex is fixed due to mass threshold
+		unsigned int              nmbEvents   ()                                    const { return _nmbEvents;               }  ///< returns number of events that enter in the likelihood
+		unsigned int              rank        ()                                    const { return _rank;                    }  ///< returns rank of spin density matrix
+		unsigned int              nmbWaves    (const int          reflectivity = 0) const;                                      ///< returns total number of waves (reflectivity == 0) or number or number of waves with positive/negative reflectivity; flat wave is not counted!
+		unsigned int              nmbPars     ()                                    const { return _nmbPars;                 }  ///< returns total number of parameters
+		unsigned int              nmbParsFixed()                                    const { return _nmbParsFixed;            }  ///< returns number of fixed parameters
+		std::string               parName     (const unsigned int parIndex)         const { return _parNames[parIndex];      }  ///< returns name of likelihood parameter at parIndex
+		double                    parThreshold(const unsigned int parIndex)         const { return _parThresholds[parIndex]; }  ///< returns threshold in GeV/c^2 above which likelihood parameter at parIndex becomes free
+		bool                      parFixed    (const unsigned int parIndex)         const { return _parFixed[parIndex];      }  ///< returns whether likelihood parameter at parIndex is fixed due to mass threshold
+		std::vector<unsigned int> anchorWaves ()                                    const { return _anchorWaves;             }  ///< returns list of anchor waves
 
 		double dLcache(const unsigned int i) const { return _derivCache[i]; }
 		unsigned int ncalls(const functionCallEnum func = FDF) const
@@ -177,7 +180,9 @@ namespace rpwa {
 
 		bool addAccIntegral(rpwa::ampIntegralMatrix& accMatrix, unsigned int accEventsOverride = 0);
 
-		bool addAmplitude(const rpwa::amplitudeMetadata& meta);
+		bool addAmplitude(const rpwa::amplitudeMetadata& meta, const std::map<std::string, std::pair<double, double> >* binningMap = 0, const eventMetadata* evtMeta = 0);
+
+		std::map<std::string, std::pair<double, double> > compareBinningMaps(const std::map<std::string, std::pair<double, double> >& base, const std::map<std::string, std::pair<double, double> >& moreBins);
 
 		bool finishInit();
 
@@ -246,15 +251,16 @@ namespace rpwa {
 		unsigned int _numbAccEvents; // number of input events used for acceptance integrals (accepted + rejected!)
 		double       _totAcc;        // total acceptance in this bin
 
-		waveNameArrayType        _waveNames;            // wave names [reflectivity][wave index]
-		waveThrArrayType         _waveThresholds;       // mass thresholds of waves
-		waveAmpAddedArrayType    _waveAmpAdded;         // amplitude read for waves
-		std::vector<std::string> _parNames;             // function parameter names
-		std::vector<double>      _parThresholds;        // mass thresholds of parameters
-		std::vector<bool>        _parFixed;             // parameter fixed due to mass thresholds
-		waveParamsType           _waveParams;           // map wave name to reflectivity and index in
-		                                                // reflectivity
-		ampToParMapType          _prodAmpToFuncParMap;  // maps each production amplitude to the indices
+		waveNameArrayType         _waveNames;            // wave names [reflectivity][wave index]
+		waveThrArrayType          _waveThresholds;       // mass thresholds of waves
+		waveAmpAddedArrayType     _waveAmpAdded;         // amplitude read for waves
+		std::vector<std::string>  _parNames;             // function parameter names
+		std::vector<double>       _parThresholds;        // mass thresholds of parameters
+		std::vector<bool>         _parFixed;             // parameter fixed due to mass thresholds
+		std::vector<unsigned int> _anchorWaves;          // parameter indices for anchor waves
+		waveParamsType            _waveParams;           // map wave name to reflectivity and index in
+		                                                 // reflectivity
+		ampToParMapType           _prodAmpToFuncParMap;  // maps each production amplitude to the indices
 		                                                // of its real and imginary part in the parameter
 		                                                // array; negative indices mean that the parameter
 		                                                // is not existing due to rank restrictions

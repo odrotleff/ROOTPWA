@@ -1027,7 +1027,7 @@ pwaLikelihood<complexT>::addAccIntegral(ampIntegralMatrix& accMatrix,
 
 template<typename complexT>
 bool
-pwaLikelihood<complexT>::addAmplitude(const amplitudeMetadata& meta)
+pwaLikelihood<complexT>::addAmplitude(const amplitudeMetadata& meta, const map<string, pair<double, double> >* binningMap, const eventMetadata* evtMeta)
 {
 	if (not _accIntAdded) {
 		printErr << "acceptance integral not added!" << endl
@@ -1051,6 +1051,21 @@ pwaLikelihood<complexT>::addAmplitude(const amplitudeMetadata& meta)
 	amplitudeTreeLeaf* ampTreeLeaf = 0;
 	meta.amplitudeTree()->SetBranchAddress(amplitudeMetadata::amplitudeLeafName.c_str(), &ampTreeLeaf);
 	vector<complexT> amps;
+	const bool onTheFlyBinning = ((binningMap == 0) ? false : true);
+	map<string, double> additionalLeaves;
+	if (onTheFlyBinning) {
+		if (evtMeta == 0) {
+			printErr << "eventMetadata not set. Aborting..." << endl;
+		}
+		meta.amplitudeTree()->AddFriend(evtMeta->eventTree(), "evtTree");
+		typedef map<string, pair<double, double> >::const_iterator it_type;
+		for(it_type iterator = binningMap->begin(); iterator != binningMap->end(); iterator++) {
+			string additionalVar = iterator->first;
+			additionalLeaves.insert(pair<string, double>(additionalVar, 0.));
+			printInfo << "setbranchaddress to " << additionalVar << endl;
+			meta.amplitudeTree()->SetBranchAddress(additionalVar.c_str(), &additionalLeaves[additionalVar]);
+		}
+	}
 	for (long int eventIndex = 0; eventIndex < meta.amplitudeTree()->GetEntriesFast(); ++eventIndex) {
 		meta.amplitudeTree()->GetEntry(eventIndex);
 		if (!ampTreeLeaf) {
@@ -1058,11 +1073,30 @@ pwaLikelihood<complexT>::addAmplitude(const amplitudeMetadata& meta)
 			          << "skipping." << endl;
 			continue;
 		}
-		assert(ampTreeLeaf->nmbIncohSubAmps() == 1);
-		complexT amp(ampTreeLeaf->incohSubAmp(0).real(), ampTreeLeaf->incohSubAmp(0).imag());
-		if (_useNormalizedAmps)         // normalize data, if option is switched on
-			amp /= sqrt(normInt.real());  // rescale decay amplitude
-		amps.push_back(amp);
+		bool addAmplitude = true;
+		if (onTheFlyBinning) {
+			typedef map<string, pair<double, double> >::const_iterator it_type;
+			for(it_type iterator = binningMap->begin(); iterator != binningMap->end(); iterator++) {
+				string additionalVar = iterator->first;
+				double lowerBound = iterator->second.first;
+				double upperBound = iterator->second.second;
+				double addVarValue = additionalLeaves[additionalVar];
+				if (addVarValue < lowerBound or addVarValue > upperBound) {
+//					printWarn << additionalVar << ": " << addVarValue << " is not in (" << lowerBound << "," << upperBound << ")?" << endl;
+					addAmplitude = false;
+				}
+				else {
+//					printSucc << additionalVar << ": " << addVarValue << " is in (" << lowerBound << "," << upperBound << ")?" << endl;
+				}
+			}
+		}
+		if (addAmplitude) {
+			assert(ampTreeLeaf->nmbIncohSubAmps() == 1);
+			complexT amp(ampTreeLeaf->incohSubAmp(0).real(), ampTreeLeaf->incohSubAmp(0).imag());
+			if (_useNormalizedAmps)         // normalize data, if option is switched on
+				amp /= sqrt(normInt.real());  // rescale decay amplitude
+			amps.push_back(amp);
+		}
 	}
 
 	unsigned int nmbEvents = amps.size();
@@ -1249,10 +1283,12 @@ pwaLikelihood<complexT>::buildParDataStruct(const unsigned int rank,
 	_parCache.resize     (_nmbPars, 0);
 	_derivCache.resize   (_nmbPars, 0);
 	_prodAmpToFuncParMap.resize(extents[_rank][2][_nmbWavesReflMax]);
+	_anchorWaves.clear();
 	// build parameter names
 	unsigned int parIndex = 0;
 	for (unsigned int iRank = 0; iRank < _rank; ++iRank)
-		for (unsigned int iRefl = 0; iRefl < 2; ++iRefl)
+		for (unsigned int iRefl = 0; iRefl < 2; ++iRefl) {
+			_anchorWaves.push_back(parIndex);
 			for (unsigned int iWave = 0; iWave < _nmbWavesRefl[iRefl]; ++iWave) {
 				ostringstream parName;
 				if (iWave < iRank)  // production amplitude is zero
@@ -1285,6 +1321,7 @@ pwaLikelihood<complexT>::buildParDataStruct(const unsigned int rank,
 					parIndex += 2;
 				}
 			}
+		}
 	// flat wave
 	_parNames     [parIndex] = "V_flat";
 	_parThresholds[parIndex] = 0;

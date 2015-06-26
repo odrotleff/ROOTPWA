@@ -39,7 +39,29 @@ def readWaveList(waveListFileName, keyFiles):
 	return waveDescThres
 
 
-def pwaFit(ampFileList, normIntegralFileName, accIntegralFileName, binningMap, waveListFileName, keyFiles, seed=0, cauchy=False, cauchyWidth=0.5, startValFileName="", accEventsOverride=0, checkHessian=False, saveSpace=False, rank=1, verbose=False):
+# def compareBinningMaps(const map<string, pair<double, double> >& base, const map<string, pair<double, double> >& moreBins)
+# {
+# 	map<string, pair<double, double> > additionalVars;
+# 	typedef map<string, pair<double, double>>::iterator it_type;
+# 	for(it_type iterator = moreBins.begin(); iterator != moreBins.end(); iterator++) {
+# 		string key = iterator->first;
+# 		double lowerBound = iterator->second.first;
+# 		double upperBound = iterator->second.second;
+# 		it_type currentBase = base.find(key);
+# 		if (currentBase == base.end()) {
+# 			additionalVars.insert(pair<string, pair<double,double> >(iterator->first, iterator->second));
+# 		}
+# 		else {
+# 			if(lowerBound != currentBase->first or upperBound != currentBase->second) {
+# 				printErr << "LALALA" << endl;
+# 			}
+# 		}
+# 	}
+# 	return additionalVars;
+# }
+
+
+def pwaFit(ampFileList, normIntegralFileName, accIntegralFileName, binningMap, waveListFileName, keyFiles, seed=0, cauchy=False, cauchyWidth=0.5, startValFileName="", accEventsOverride=0, checkHessian=False, saveSpace=False, rank=1, verbose=False, addBinningMap=[], evtFileName=""):
 	waveDescThres = readWaveList(waveListFileName, keyFiles)
 	massBinCenter = (binningMap['mass'][1] + binningMap['mass'][0]) / 2. # YOU CAN DO BETTER
 
@@ -82,11 +104,20 @@ def pwaFit(ampFileList, normIntegralFileName, accIntegralFileName, binningMap, w
 		if not ampFile:
 			pyRootPwa.utils.printErr("could not open amplitude file '" + ampFileName + "'.")
 			return False
-		meta = pyRootPwa.core.amplitudeMetadata.readAmplitudeFile(ampFile, waveName)
-		if not meta:
+		ampMeta = pyRootPwa.core.amplitudeMetadata.readAmplitudeFile(ampFile, waveName)
+		if not ampMeta:
 			pyRootPwa.utils.printErr("could not get metadata for waveName '" + waveName + "'.")
 			return False
-		if (not likelihood.addAmplitude(meta)):
+		evtFile = ROOT.TFile.Open(evtFileName, "READ")
+		if not evtFile:
+			pyRootPwa.utils.printErr("could not open amplitude file '" + evtFileName + "'.")
+			return False
+		evtMeta = pyRootPwa.core.eventMetadata.readEventFile(evtFile)
+		if not evtMeta:
+			pyRootPwa.utils.printErr("could not get metadata for event file '" + evtFileName + "'.")
+			return False
+		print ampMeta
+		if (not likelihood.addAmplitude(ampMeta, addBinningMap, evtMeta)):
 			pyRootPwa.utils.printErr("could not add amplitude '" + waveName + "'. Aborting...")
 			return False
 	if (not likelihood.finishInit()):

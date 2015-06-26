@@ -10,6 +10,7 @@
 
 #include<ampIntegralMatrix.h>
 #include<amplitudeMetadata.h>
+#include<eventMetadata.h>
 #include<pwaLikelihood.h>
 #include<fitResult.h>
 
@@ -156,6 +157,11 @@ void rpwa::py::exportRootConverters() {
 
 	bp::def(
 		"__RootConverters_convertFromPy_rpwaAmplitudeMetadata", &rpwa::py::convertFromPy<rpwa::amplitudeMetadata*>
+		, bp::return_internal_reference<1>()
+	);
+
+	bp::def(
+		"__RootConverters_convertFromPy_rpwaEventMetadata", &rpwa::py::convertFromPy<rpwa::eventMetadata*>
 		, bp::return_internal_reference<1>()
 	);
 
