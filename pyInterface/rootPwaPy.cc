@@ -29,6 +29,9 @@
 
 // highLevelInterface
 #include "calcAmplitude_py.h"
+#include "calcMultipleAmplitudes_py.h"
+#include "calcTprime_py.h"
+
 #include "pwaFit_py.h"
 #ifdef USE_NLOPT
 #include "pwaNloptFit_py.h"
@@ -99,6 +102,9 @@ BOOST_PYTHON_MODULE(libRootPwaPy){
 	rpwa::py::exportCalcAmplitude();
 	rpwa::py::exportPwaLikelihood();
 	rpwa::py::exportPwaFit();
+	rpwa::py::exportCalcMultipleAmplitudes();
+	rpwa::py::exportCalcTprime();
+
 #ifdef USE_NLOPT
 	rpwa::py::exportPwaNloptFit();
 #endif

@@ -17,7 +17,7 @@ bool rpwa::hli::getIntegralsFromKeyFiles(                       const std::strin
 
 	std::vector<ampIntegralMatrix> integralMatrix = std::vector<ampIntegralMatrix>(1,ampIntegralMatrix());
 	std::vector<rpwa::isobarAmplitudePtr> amplitudes = getAmplitudesFromKeyFiles(keyFiles);
-	std::vector<std::string> names = waveNamesFromKeyFiles(keyFiles, true);
+	std::vector<std::string> names = waveNamesFromKeyFiles(keyFiles);
 	std::vector<double> tBinning(0);
 	integralMatrix[0].initialize(names);
 	if (eventFiles.size()==0){
@@ -69,7 +69,7 @@ bool rpwa::hli::getTbinnedIntegralsFromKeyFiles(                const std::strin
 
 	std::vector<ampIntegralMatrix> integralMatrix = std::vector<ampIntegralMatrix>(nTbin,ampIntegralMatrix());
 	std::vector<rpwa::isobarAmplitudePtr> amplitudes = getAmplitudesFromKeyFiles(keyFiles);
-	std::vector<std::string> names = waveNamesFromKeyFiles(keyFiles, true);
+	std::vector<std::string> names = waveNamesFromKeyFiles(keyFiles);
 	integralMatrix[0].initialize(names);
 	if (eventFiles.size()==0){
 		printWarn<<"no eventFiles given, abort"<<std::endl;
@@ -143,8 +143,7 @@ std::vector<rpwa::isobarAmplitudePtr> rpwa::hli::getAmplitudesFromKeyFiles(const
 	return returnValue;
 };
 
-std::vector<std::string> rpwa::hli::waveNamesFromKeyFiles(      const std::vector<std::string>  &keyFiles, 
-                                                                bool                            newConvention){
+std::vector<std::string> rpwa::hli::waveNamesFromKeyFiles(      const std::vector<std::string>  &keyFiles){
 	size_t nWaves = keyFiles.size();
 	std::vector<std::string> names(nWaves);
 	waveDescription description = waveDescription();
@@ -152,7 +151,7 @@ std::vector<std::string> rpwa::hli::waveNamesFromKeyFiles(      const std::vecto
 	for (size_t wave=0;wave<nWaves;++wave){
 		description.parseKeyFile(keyFiles[wave]);
 		description.constructDecayTopology(topology);
-		names[wave] = description.waveNameFromTopology(*topology,newConvention);
+		names[wave] = description.waveNameFromTopology(*topology);
 	};
 	return names;
 };

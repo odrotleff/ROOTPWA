@@ -31,7 +31,7 @@ namespace rpwa {
 		                                                                        const int                               maxNmbEvents);
 
 		std::vector<rpwa::isobarAmplitudePtr> getAmplitudesFromKeyFiles(const std::vector<std::string> &keyFiles);
-		std::vector<std::string> waveNamesFromKeyFiles(const std::vector<std::string> &keyFiles,bool newConvention = false);
+		std::vector<std::string> waveNamesFromKeyFiles(const std::vector<std::string> &keyFiles);
 
 		std::vector<std::complex<double> > evaluateAmplitudes(std::vector<rpwa::isobarAmplitudePtr> &amplitudes, TClonesArray prodKinematics, TClonesArray decayKinematics);
 

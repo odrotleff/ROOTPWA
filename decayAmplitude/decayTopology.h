@@ -52,6 +52,7 @@
 
 #include "particle.h"
 #include "productionVertex.h"
+#include "diffractiveDissVertex.h"
 #include "interactionVertex.h"
 #include "fsVertex.h"
 #include "decayGraph.hpp"
@@ -156,6 +157,8 @@ namespace rpwa {
 		static bool debug() { return _debug; }                             ///< returns debug flag
 		static void setDebug(const bool debug = true) { _debug = debug; }  ///< sets debug flag
 
+		double getTprime();
+
 
 	protected:
 
@@ -184,6 +187,7 @@ namespace rpwa {
 		std::vector<TVector3>                _fsDataPartMomCache;  ///< caches final-state momenta of last event read from input data; allows to "reset" kinematics for multiple passes over the same data
 
 		static bool _debug;  ///< if set to true, debug messages are printed
+		bool _isDisVert;
 
 	};
 

@@ -7,4 +7,4 @@ namespace rpwa {
 	}
 }
 
-#endif
+#endif//CALCAMPLITUDE_PY_H
