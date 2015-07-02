@@ -181,7 +181,7 @@ if __name__ == "__main__":
 	startValuesNoCauchy = getStartValues(likelihood, args.seed)
 
 	M = args.nmbSamples
-	Madapt = M * args.burnInRatio
+	Madapt = int(M * args.burnInRatio)
 	delta = 0.2
 	print('Running HMC without cauchy priors with dual averaging and trajectory length %0.2f...' % delta)
 	samples, lnprob, epsilon = nuts6(FdFNoCauchy, M, Madapt, startValuesNoCauchy, delta, likelihood.anchorWaves())
