@@ -22,9 +22,10 @@ def readWaveList(waveListFileName, keyFiles):
 			if(len(lineArray) >= 1 and len(lineArray) <= 2):
 				waveName = lineArray[0]
 				if(len(lineArray) == 1):
-					threshold = 0
+					threshold = "0"
 				else:
 					threshold = lineArray[1]
+				print threshold
 				waveDesc = pyRootPwa.core.waveDescription()
 				waveDesc.parseKeyFile(keyFiles[waveName])
 				waveDescThres.append( (waveName, waveDesc, float(threshold)) )

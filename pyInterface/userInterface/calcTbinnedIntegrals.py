@@ -78,6 +78,7 @@ if __name__ == "__main__":
 	parser.add_argument("-v", action="store_true", dest="debug", help="verbose; print debug output (default: false)")
 	args = parser.parse_args()
 
+	pyRootPwa.ROOT.gROOT.ProcessLine("#include <complex>")
 	config = pyRootPwa.rootPwaConfig()
 	if not config.initialize(args.configFileName):
 		pyRootPwa.utils.printErr("loading config file '" + args.configFileName + "' failed. Aborting...")
