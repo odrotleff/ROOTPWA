@@ -278,6 +278,7 @@ void rpwa::py::exportPwaLikelihood() {
 		.def("anchorWaves", ::pwaLikelihood_anchorWaves)
 		.def("useNormalizedAmps", &rpwa::pwaLikelihood<std::complex<double> >::useNormalizedAmps)
 		.def("setPriorType", &rpwa::pwaLikelihood<std::complex<double> >::setPriorType)
+		.def("setCauchyWidth", &rpwa::pwaLikelihood<std::complex<double> >::setCauchyWidth)
 		.def("priorType", &rpwa::pwaLikelihood<std::complex<double> >::priorType)
 		.def(
 			"setQuiet"
