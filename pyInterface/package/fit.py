@@ -7,59 +7,38 @@ ROOT = pyRootPwa.ROOT
 def readWaveList(waveListFileName, keyFiles):
 	pyRootPwa.utils.printInfo("reading amplitude names and thresholds from wave list file "
 	          + "'" + waveListFileName + "'.")
-	with open(waveListFileName, 'r') as waveListFile:
-#	if (not waveListFile) {
-#		printErr << "cannot open file '" << waveListFileName << "'. Aborting..." << endl;
-#		throw;
-#	}
-		waveDescThres = []
-		lineNmb = 0
-		for line in waveListFile:
-			if (line[0] == '#'):  # comments start with #
-				continue
-			line = line.replace('\n', '')
-			lineArray = line.split(" ")
-			if(len(lineArray) >= 1 and len(lineArray) <= 2):
-				waveName = lineArray[0]
-				if(len(lineArray) == 1):
-					threshold = "0"
+	waveDescThres = []
+	if waveListFileName == '':
+		for waveName in keyFiles:
+			waveDesc = pyRootPwa.core.waveDescription()
+			waveDesc.parseKeyFile(keyFiles[waveName])
+			waveDescThres.append( (waveName, waveDesc, 0.) )
+	else:
+		with open(waveListFileName, 'r') as waveListFile:
+			lineNmb = 0
+			for line in waveListFile:
+				if (line[0] == '#'):  # comments start with #
+					continue
+				line = line.replace('\n', '')
+				lineArray = line.split(" ")
+				if(len(lineArray) >= 1 and len(lineArray) <= 2):
+					waveName = lineArray[0]
+					if(len(lineArray) == 1):
+						threshold = "0"
+					else:
+						threshold = lineArray[1]
+					waveDesc = pyRootPwa.core.waveDescription()
+					waveDesc.parseKeyFile(keyFiles[waveName])
+					waveDescThres.append( (waveName, waveDesc, float(threshold)) )
 				else:
-					threshold = lineArray[1]
-				print threshold
-				waveDesc = pyRootPwa.core.waveDescription()
-				waveDesc.parseKeyFile(keyFiles[waveName])
-				waveDescThres.append( (waveName, waveDesc, float(threshold)) )
-			else:
-				pyRootPwa.utils.printWarn("cannot parse line '" + line + "' in wave list file "
-				          + "'" + waveListFileName + "'.")
-#  			if (_debug):
-#  				printDebug("reading line " + lineNmb + 1 + ": " + waveName + ", "
-#  				           + "threshold = " + threshold + " MeV/c^2")
-			lineNmb += 1
-	pyRootPwa.utils.printInfo("read " + str(lineNmb) + " lines from wave list file " + "'" + waveListFileName + "'")
+					pyRootPwa.utils.printWarn("cannot parse line '" + line + "' in wave list file "
+					          + "'" + waveListFileName + "'.")
+	#  			if (_debug):
+	#  				printDebug("reading line " + lineNmb + 1 + ": " + waveName + ", "
+	#  				           + "threshold = " + threshold + " MeV/c^2")
+				lineNmb += 1
+			pyRootPwa.utils.printInfo("read " + str(lineNmb) + " lines from wave list file " + "'" + waveListFileName + "'")
 	return waveDescThres
-
-
-# def compareBinningMaps(const map<string, pair<double, double> >& base, const map<string, pair<double, double> >& moreBins)
-# {
-# 	map<string, pair<double, double> > additionalVars;
-# 	typedef map<string, pair<double, double>>::iterator it_type;
-# 	for(it_type iterator = moreBins.begin(); iterator != moreBins.end(); iterator++) {
-# 		string key = iterator->first;
-# 		double lowerBound = iterator->second.first;
-# 		double upperBound = iterator->second.second;
-# 		it_type currentBase = base.find(key);
-# 		if (currentBase == base.end()) {
-# 			additionalVars.insert(pair<string, pair<double,double> >(iterator->first, iterator->second));
-# 		}
-# 		else {
-# 			if(lowerBound != currentBase->first or upperBound != currentBase->second) {
-# 				printErr << "LALALA" << endl;
-# 			}
-# 		}
-# 	}
-# 	return additionalVars;
-# }
 
 
 def pwaFit(ampFileList, normIntegralFileName, accIntegralFileName, binningMap, waveListFileName, keyFiles, seed=0, cauchy=False, cauchyWidth=0.5, startValFileName="", accEventsOverride=0, checkHessian=False, saveSpace=False, rank=1, verbose=False, addBinningMap=[], evtFileName=""):
