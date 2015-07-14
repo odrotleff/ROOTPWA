@@ -96,7 +96,6 @@ def pwaFit(ampFileList, normIntegralFileName, accIntegralFileName, binningMap, w
 		if not evtMeta:
 			pyRootPwa.utils.printErr("could not get metadata for event file '" + evtFileName + "'.")
 			return False
-		print ampMeta
 		if (not likelihood.addAmplitude(ampMeta, addBinningMap, evtMeta)):
 			pyRootPwa.utils.printErr("could not add amplitude '" + waveName + "'. Aborting...")
 			return False
@@ -116,7 +115,7 @@ def pwaFit(ampFileList, normIntegralFileName, accIntegralFileName, binningMap, w
 	return fitResult
 
 
-def pwaNloptFit(ampFileList, normIntegralFileName, accIntegralFileName, binningMap, waveListFileName, keyFiles, seed=0, cauchy=False, cauchyWidth=0.5, startValFileName="", accEventsOverride=0, checkHessian=False, saveSpace=False, rank=1, verbose=False):
+def pwaNloptFit(ampFileList, normIntegralFileName, accIntegralFileName, binningMap, waveListFileName, keyFiles, seed=0, cauchy=False, cauchyWidth=0.5, startValFileName="", accEventsOverride=0, checkHessian=False, saveSpace=False, rank=1, verbose=False, addBinningMap=[], evtFileName=""):
 	waveDescThres = readWaveList(waveListFileName, keyFiles)
 	massBinCenter = (binningMap['mass'][1] + binningMap['mass'][0]) / 2. # YOU CAN DO BETTER
 
@@ -159,11 +158,19 @@ def pwaNloptFit(ampFileList, normIntegralFileName, accIntegralFileName, binningM
 		if not ampFile:
 			pyRootPwa.utils.printErr("could not open amplitude file '" + ampFileName + "'.")
 			return False
-		meta = pyRootPwa.core.amplitudeMetadata.readAmplitudeFile(ampFile, waveName)
-		if not meta:
+		ampMeta = pyRootPwa.core.amplitudeMetadata.readAmplitudeFile(ampFile, waveName)
+		if not ampMeta:
 			pyRootPwa.utils.printErr("could not get metadata for waveName '" + waveName + "'.")
 			return False
-		if (not likelihood.addAmplitude(meta)):
+		evtFile = ROOT.TFile.Open(evtFileName, "READ")
+		if not evtFile:
+			pyRootPwa.utils.printErr("could not open amplitude file '" + evtFileName + "'.")
+			return False
+		evtMeta = pyRootPwa.core.eventMetadata.readEventFile(evtFile)
+		if not evtMeta:
+			pyRootPwa.utils.printErr("could not get metadata for event file '" + evtFileName + "'.")
+			return False
+		if (not likelihood.addAmplitude(ampMeta, addBinningMap, evtMeta)):
 			pyRootPwa.utils.printErr("could not add amplitude '" + waveName + "'. Aborting...")
 			return False
 	if (not likelihood.finishInit()):
