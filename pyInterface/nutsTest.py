@@ -60,7 +60,7 @@ def getStartValues(likelihood, seed):
 			sys.exit(1)
 	return startValues
 
-def initLikelihood(fileManager, massBinCenter, binID, waveListFileName, accEventsOverride, rank, cauchyPriors, verbose):
+def initLikelihood(fileManager, massBinCenter, binID, waveListFileName, accEventsOverride, rank, cauchyPriors, verbose, genIntFilename="", accIntFilename="", addBinningMap={}, evtFileName=""):
 	waveDescThres = readWaveList(waveListFileName, fileManager.getKeyFiles())
 	likelihood = pyRootPwa.core.pwaLikelihood()
 	likelihood.useNormalizedAmps(True)
@@ -75,7 +75,11 @@ def initLikelihood(fileManager, massBinCenter, binID, waveListFileName, accEvent
 		return False
 
 	normIntegralFileName  = fileManager.getIntegralFilePath(binID, pyRootPwa.core.eventMetadata.GENERATED)
+	if not genIntFilename == "":
+		normIntegralFileName = genIntFilename
 	accIntegralFileName = fileManager.getIntegralFilePath(binID, pyRootPwa.core.eventMetadata.ACCEPTED)
+	if not accIntFilename == "":
+		accIntegralFileName = accIntFilename
 	normIntFile = ROOT.TFile.Open(normIntegralFileName, "READ")
 	if len(normIntFile.GetListOfKeys()) != 1:
 		pyRootPwa.utils.printWarn("'" + normIntegralFileName + "' does not contain exactly one TKey.")
@@ -102,11 +106,19 @@ def initLikelihood(fileManager, massBinCenter, binID, waveListFileName, accEvent
 		if not ampFile:
 			pyRootPwa.utils.printErr("could not open amplitude file '" + ampFileName + "'.")
 			return False
-		meta = pyRootPwa.core.amplitudeMetadata.readAmplitudeFile(ampFile, waveName)
-		if not meta:
+		ampMeta = pyRootPwa.core.amplitudeMetadata.readAmplitudeFile(ampFile, waveName)
+		if not ampMeta:
 			pyRootPwa.utils.printErr("could not get metadata for waveName '" + waveName + "'.")
 			return False
-		if (not likelihood.addAmplitude(meta)):
+		evtFile = ROOT.TFile.Open(evtFileName, "READ")
+		if not evtFile:
+			pyRootPwa.utils.printErr("could not open amplitude file '" + evtFileName + "'.")
+			return False
+		evtMeta = pyRootPwa.core.eventMetadata.readEventFile(evtFile)
+		if not evtMeta:
+			pyRootPwa.utils.printErr("could not get metadata for event file '" + evtFileName + "'.")
+			return False
+		if (not likelihood.addAmplitude(ampMeta, addBinningMap, evtMeta)):
 			pyRootPwa.utils.printErr("could not add amplitude '" + waveName + "'. Aborting...")
 			return False
 	if (not likelihood.finishInit()):
@@ -134,6 +146,8 @@ if __name__ == "__main__":
 	parser.add_argument("outputFileName", type=str, metavar="fileName", help="path to output file")
 	parser.add_argument("-c", type=str, metavar="configFileName", dest="configFileName", default="./rootpwa.config", help="path to config file (default: './rootpwa.config')")
 	parser.add_argument("-b", type=int, metavar="#", dest="binID", default=0, help="bin ID of fit (default: 0)")
+	parser.add_argument("-B", dest="addBin", action='append', help="additional binning in the form 'binningVariable;lowerBound;upperBound' (e.g. 'mass;1000;1100')."+
+	                                                             "You can use the argument multiple times for multiple binning variables")
 	parser.add_argument("-s", type=int, metavar="#", dest="seed", default=0, help="random seed (default: 0)")
 	parser.add_argument("-w", type=str, metavar="path", dest="waveListFileName", default="", help="path to wavelist file (default: none)")
 	parser.add_argument("-N", type=int, metavar="#", dest="nmbSamples", default=10000, help="number of samples (default: 10,000)")
@@ -141,6 +155,8 @@ if __name__ == "__main__":
 	parser.add_argument("-r", type=int, metavar="#", dest="rank", default=1, help="rank of spin density matrix (default: 1)")
 	parser.add_argument("-A", type=int, metavar="#", dest="accEventsOverride", default=0, help="number of input events to normalize acceptance to (default: use number of events from acceptance integral file)")
  	parser.add_argument("-C", "--cauchyPriors", help="use half-Cauchy priors (default: false)", action="store_true")
+	parser.add_argument("-g", type=str, metavar="integralPath", dest="genIntFilename", default="", help="phase space integral file override")
+	parser.add_argument("-a", type=str, metavar="integralPath", dest="accIntFilename", default="", help="acceptance integral file override")
 	parser.add_argument("-v", "--verbose", help="verbose; print debug output (default: false)", action="store_true")
 	args = parser.parse_args()
 
@@ -173,9 +189,12 @@ if __name__ == "__main__":
 		sys.exit(1)
 	binningMap = fileManager.getBinFromID(args.binID)
 	massBinCenter = (binningMap['mass'][1] + binningMap['mass'][0]) / 2.
-	likelihood = initLikelihood(fileManager, massBinCenter, args.binID, args.waveListFileName, args.accEventsOverride, args.rank, args.cauchyPriors, args.verbose)
-	
-	print "Anchor waves: " + str(likelihood.anchorWaves())
+	addBinningMap = pyRootPwa.utils.binningMapFromArgList(args.addBin)
+	if not addBinningMap:
+		printWarn("received no valid additional binning map argument")
+	eventFile = fileManager.getDataFile(args.binID, pyRootPwa.core.eventMetadata.REAL)
+	eventFileName = eventFile.dataFileName
+	likelihood = initLikelihood(fileManager, massBinCenter, args.binID, args.waveListFileName, args.accEventsOverride, args.rank, args.cauchyPriors, args.verbose, args.genIntFilename, args.accIntFilename, addBinningMap, eventFileName)
 
 	print "setting start values"
 	startValuesNoCauchy = getStartValues(likelihood, args.seed)
@@ -184,7 +203,7 @@ if __name__ == "__main__":
 	Madapt = int(M * args.burnInRatio)
 	delta = 0.2
 	print('Running HMC without cauchy priors with dual averaging and trajectory length %0.2f...' % delta)
-	samples, lnprob, epsilon = nuts6(FdFNoCauchy, M, Madapt, startValuesNoCauchy, delta, likelihood.anchorWaves())
+	samples, lnprob, epsilon = nuts6(FdFNoCauchy, M, Madapt, startValuesNoCauchy, delta)
 	print('Done. Final epsilon = %f.' % epsilon)
 # 	print('Running HMC with cauchy priors with dual averaging and trajectory length %0.2f...' % delta)
 # 	samplesWithCauchy, lnprobWithCauchy, epsilonWithCauchy = nuts6(FdFWithCauchy, M, Madapt, startValuesWithCauchy, delta)
