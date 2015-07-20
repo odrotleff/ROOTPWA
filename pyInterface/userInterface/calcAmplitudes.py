@@ -22,7 +22,7 @@ def readWaveList(waveListFileName):
 				if(len(lineArray) >= 1 and len(lineArray) <= 2):
 					waveName = lineArray[0]
 					if(len(lineArray) == 1):
-						threshold = 0
+						threshold = "0"
 					else:
 						threshold = lineArray[1]
 					waveNamesFromWavelist.append(waveName)
