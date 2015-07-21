@@ -188,7 +188,9 @@ if __name__ == "__main__":
 	for i in range(likelihood.nmbPars()):
 		parName = likelihood.parName(i);
 		pars.append(result.fitParameter(parName))
-	covMatrix = likelihood.CovarianceMatrixFromPar(pars)
+	covMatrix = likelihood.CovarianceMatrix(pars)
+	if args.verbose:
+		covMatrix.Print()
 
 	newResult = pyRootPwa.core.fitResult()
 	newResult.fill(result.nmbEvents(),
@@ -204,13 +206,17 @@ if __name__ == "__main__":
 	               result.acceptedNormIntegralMatrix(),
 	               result.phaseSpaceIntegralVector(),
 	               result.converged(),
-	               result.hasHessian())
+	               True)
 	valTreeName   = "pwa"
 	valBranchName = "fitResult_v2"
+	outputFile = pyRootPwa.ROOT.TFile.Open(args.outputFileName, "NEW")
+	if (not outputFile) or outputFile.IsZombie():
+		pyRootPwa.utils.printErr("cannot open output file '" + args.outputFileName + "'. Aborting...")
+		sys.exit(1)
 	printInfo("file '" + args.outputFileName + "' is empty. "
 	        + "creating new tree '" + valTreeName + "' for PWA result.")
 	tree = pyRootPwa.ROOT.TTree(valTreeName, valTreeName)
-	if not result.branch(tree, valBranchName):
+	if not newResult.branch(tree, valBranchName):
 		printErr("failed to create new branch '" + valBranchName + "' in file '" + args.outputFileName + "'.")
 		sys.exit(1)
 	tree.Fill()
