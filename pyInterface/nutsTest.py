@@ -204,12 +204,11 @@ if __name__ == "__main__":
 	M = args.nmbSamples
 	Madapt = int(M * args.burnInRatio)
 	delta = 0.2
-	print('Running HMC without cauchy priors with dual averaging and trajectory length %0.2f...' % delta)
+	printInfo("burn-in samples: " + str(Madapt))
+	printInfo("samples: " + str(M))
+	printInfo('Running HMC with dual averaging and trajectory length %0.2f...' % delta)
 	samples, lnprob, epsilon = nuts6(FdFNoCauchy, M, Madapt, startValuesNoCauchy, delta)
 	print('Done. Final epsilon = %f.' % epsilon)
-# 	print('Running HMC with cauchy priors with dual averaging and trajectory length %0.2f...' % delta)
-# 	samplesWithCauchy, lnprobWithCauchy, epsilonWithCauchy = nuts6(FdFWithCauchy, M, Madapt, startValuesWithCauchy, delta)
-# 	print('Done. Final epsilonWithCauchy = %f.' % epsilonWithCauchy)
 
 	if len(samples) != len(lnprob):
 		print("dieded")
