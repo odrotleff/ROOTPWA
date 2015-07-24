@@ -1062,7 +1062,6 @@ pwaLikelihood<complexT>::addAmplitude(const amplitudeMetadata& meta, const map<s
 		for(it_type iterator = binningMap->begin(); iterator != binningMap->end(); iterator++) {
 			string additionalVar = iterator->first;
 			additionalLeaves.insert(pair<string, double>(additionalVar, 0.));
-			printInfo << "setbranchaddress to " << additionalVar << endl;
 			meta.amplitudeTree()->SetBranchAddress(additionalVar.c_str(), &additionalLeaves[additionalVar]);
 		}
 	}
