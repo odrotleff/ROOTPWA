@@ -18,6 +18,7 @@
 #include <TAxis.h>
 #include <TCanvas.h>
 #include <TGraphErrors.h>
+#include <TH1F.h>
 
 #include <fitResult.h>
 #include <reportingUtils.hpp>
@@ -370,6 +371,11 @@ void plotGuiMainFrame::PrintSelected(const int sel1, const int sel2)
 	imGraph->SetName(imGraphName.c_str());
 	imGraph->SetTitle(imGraphName.c_str());
 
+	double referenceGraphMax1 = 0.;
+	double referenceGraphMax2 = 0.;
+	double referenceGraphMin1 = 0.;
+	double referenceGraphMin2 = 0.;
+
 	for(unsigned int treeIndex = 0; treeIndex < _fitResults.size(); ++treeIndex) {
 
 		const unsigned int& nPoints = _fitResults[treeIndex].size();
@@ -450,7 +456,7 @@ void plotGuiMainFrame::PrintSelected(const int sel1, const int sel2)
 			const fitResult* result = _fitResults[treeIndex][i];
 
 			if(not result->converged()) {
-				continue;
+//				continue;
 			}
 
 			int wi1 = result->waveIndex(w1);
@@ -515,8 +521,17 @@ void plotGuiMainFrame::PrintSelected(const int sel1, const int sel2)
 		phaseGraph->Add(gphM1);
 		reGraph->Add(gRe);
 		imGraph->Add(gIm);
-
+		if (treeIndex == 0) {
+			referenceGraphMax1 = TMath::MaxElement(nPoints,g1->GetY());
+			referenceGraphMin1 = TMath::MinElement(nPoints,g1->GetY());
+			referenceGraphMax2 = TMath::MaxElement(nPoints,g2->GetY());
+			referenceGraphMin2 = TMath::MinElement(nPoints,g2->GetY());
+		}
 	}
+//	intensity1Graph->SetMaximum();
+//	intensity2Graph->SetMaximum(referenceGraphMax2 * 1.1);
+//	intensity1Graph->SetMinimum();
+//	intensity2Graph->SetMinimum(referenceGraphMin2 - referenceGraphMax2 * 0.1);
 
 	// plot graphs
 	if(not _currentCanvas or _checkDrawNewCanvas->IsOn()) {
@@ -542,11 +557,13 @@ void plotGuiMainFrame::PrintSelected(const int sel1, const int sel2)
 	intensity1Graph->Draw("AP");
 	intensity1Graph->GetXaxis()->SetTitle("5#pi mass (GeV/c^2)");
 	intensity1Graph->GetYaxis()->SetTitle("Intensity");
+	intensity1Graph->GetYaxis()->SetRangeUser(referenceGraphMin1 - referenceGraphMax1 * 0.1,referenceGraphMax1 * 1.1);
 
 	_currentCanvas->cd(2);
 	intensity2Graph->Draw("AP");
 	intensity2Graph->GetXaxis()->SetTitle("5#pi mass (GeV/c^2)");
 	intensity2Graph->GetYaxis()->SetTitle("Intensity");
+	intensity2Graph->GetYaxis()->SetRangeUser(referenceGraphMin2 - referenceGraphMax2 * 0.1,referenceGraphMax2 * 1.1);
 
 	_currentCanvas->Draw();
 	_currentCanvas->Update();
