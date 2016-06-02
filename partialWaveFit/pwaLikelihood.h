@@ -81,6 +81,7 @@ namespace rpwa {
 		typedef boost::tuples::tuple<std::string, rpwa::waveDescription, double> waveDescThresType;     // tuple for wave name, wave description and threshold
 
 
+
 	public:
 
 		// enum for function call counters

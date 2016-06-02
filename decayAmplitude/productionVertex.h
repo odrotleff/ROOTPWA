@@ -76,6 +76,9 @@ namespace rpwa {
 
 		virtual std::string name() const { return "productionVertex"; }  ///< returns label used in graph visualization, reporting, and key file
 
+		virtual double getTprime() const {printWarn<<"getTprime not overwritten"<<std::endl;return 0.;};
+
+
 		static bool debug() { return _debug; }                             ///< returns debug flag
 		static void setDebug(const bool debug = true) { _debug = debug; }  ///< sets debug flag
 
